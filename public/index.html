@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livestream - Premium Movies & TV Shows</title>
+  <!-- Google Fonts: Bebas Neue for branding, Inter for body and controls -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="hamburger-btn" class="icon-btn" aria-label="Toggle Navigation Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <a href="/" class="brand-logo">LIVESTREAM</a>
+    </div>
+    <!-- Center Search Bar -->
+    <div class="header-center">
+      <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="search-input" placeholder="Search by title, genre, actors, studio..." autocomplete="off">
+        <button id="search-clear-btn" class="search-clear-btn" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="signup-btn" class="signup-btn-link" title="Create Account">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Sign Up</span>
+      </button>
+      <a href="/admin.html" class="admin-btn-link" title="Admin Dashboard">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>Upload</span>
+      </a>
+      <div class="user-profile">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" alt="User Avatar" class="avatar">
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Drawer (Hamburger Panel) -->
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+  <aside id="nav-drawer" class="nav-drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">Browse Livestream</span>
+      <button id="drawer-close-btn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <nav class="drawer-menu">
+      <a href="#" class="menu-item active" data-filter="all"><i class="fa-solid fa-house"></i> Home</a>
+
+      <!-- Movies Menu Section -->
+      <div class="menu-section">
+        <button class="menu-section-header" id="movies-section-toggle">
+          <span><i class="fa-solid fa-film"></i> Movies</span>
+          <i class="fa-solid fa-chevron-down fold-icon"></i>
+        </button>
+        <div class="menu-section-content" id="movies-section-content">
+          <a href="#" class="sub-menu-item" data-filter="movies-all">All Movies</a>
+          <a href="#" class="sub-menu-item" data-filter="movies-recent">Recent Releases</a>
+          <a href="#" class="sub-menu-item" data-filter="movies-old">Previously Released</a>
+        </div>
+      </div>
+
+      <!-- TV Shows Menu Section -->
+      <div class="menu-section">
+        <button class="menu-section-header" id="tv-section-toggle">
+          <span><i class="fa-solid fa-tv"></i> TV Shows</span>
+          <i class="fa-solid fa-chevron-down fold-icon"></i>
+        </button>
+        <div class="menu-section-content" id="tv-section-content">
+          <a href="#" class="sub-menu-item" data-filter="tv-all">All TV Shows</a>
+          <a href="#" class="sub-menu-item" data-filter="tv-recent">Recent Releases</a>
+          <a href="#" class="sub-menu-item" data-filter="tv-old">Previously Released</a>
+        </div>
+      </div>
+      <!-- Genres Section -->
+      <div class="menu-section">
+        <button class="menu-section-header" id="genres-section-toggle">
+          <span><i class="fa-solid fa-masks-theater"></i> Genres</span>
+          <i class="fa-solid fa-chevron-down fold-icon"></i>
+        </button>
+        <div class="menu-section-content genres-grid" id="genres-section-content">
+          <a href="#" class="genre-tag" data-genre="Animation">Animation</a>
+          <a href="#" class="genre-tag" data-genre="Sci-Fi">Sci-Fi</a>
+          <a href="#" class="genre-tag" data-genre="Fantasy">Fantasy</a>
+          <a href="#" class="genre-tag" data-genre="Action">Action</a>
+          <a href="#" class="genre-tag" data-genre="Comedy">Comedy</a>
+          <a href="#" class="genre-tag" data-genre="Drama">Drama</a>
+          <a href="#" class="genre-tag" data-genre="CGI">CGI</a>
+        </div>
+      </div>
+
+      <!-- Country of Origin Section -->
+      <div class="menu-section">
+        <button class="menu-section-header" id="countries-section-toggle">
+          <span><i class="fa-solid fa-globe"></i> Countries</span>
+          <i class="fa-solid fa-chevron-down fold-icon"></i>
+        </button>
+        <div class="menu-section-content countries-list" id="countries-section-content">
+          <a href="#" class="country-tag" data-country="Netherlands">Netherlands</a>
+          <a href="#" class="country-tag" data-country="United States">United States</a>
+          <a href="#" class="country-tag" data-country="Japan">Japan</a>
+          <a href="#" class="country-tag" data-country="United Kingdom">United Kingdom</a>
+          <a href="#" class="country-tag" data-country="France">France</a>
+          <a href="#" class="country-tag" data-country="South Korea">South Korea</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Dashboard Layout Grid -->
+  <div class="app-layout">
+
+    <!-- LEFT SIDEBAR: Catalog list (Flexible resizable column) -->
+    <aside class="sidebar-left" id="sidebar-left">
+      <div class="sidebar-header">
+        <h2 id="catalog-title">Explore Catalog</h2>
+        <span class="catalog-count" id="catalog-count">0 items</span>
+      </div>
+
+      <!-- Movie/Show Catalog Cards -->
+      <div class="catalog-list" id="catalog-list">
+        <!-- Rendered dynamically by app.js -->
+        <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>
+      </div>
+      <!-- Ad slot placeholder in sidebar catalog -->
+      <div class="ad-placeholder catalog-ad-slot">
+        <span class="ad-badge">Advertisement</span>
+        <span class="ad-text">Ads Here</span>
+      </div>
+      <!-- Resize Splitter Drag Handle -->
+      <div class="resize-handle" id="resize-handle"></div>
+    </aside>
+
+    <!-- MIDDLE COLUMN: Video Player & Details -->
+    <main class="main-content">
+
+      <!-- Video Player viewport -->
+      <div class="video-container" id="video-container">
+        <video id="main-video-player" playsinline>
+          <!-- Stream source set by app.js -->
+        </video>
+
+        <!-- Custom Player UI Skin -->
+        <div class="player-controls-overlay" id="player-controls">
+          <!-- Progress Bar Scrubber -->
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-hover-time" id="progress-hover-time">0:00</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-buffer" id="progress-buffer"></div>
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-scrub-handle" id="progress-handle"></div>
+          </div>
+          <div class="controls-row">
+            <!-- Left Controls: Play, Skip, Volume -->
+            <div class="controls-left">
+              <button id="play-pause-btn" class="player-btn" aria-label="Play"><i class="fa-solid fa-play"></i></button>
+
+              <div class="volume-container">
+                <button id="mute-btn" class="player-btn" aria-label="Mute"><i class="fa-solid fa-volume-high"></i></button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" class="volume-slider">
+              </div>
+
+               <div class="time-display">
+                <span id="current-time">00:00</span>
+                <span class="time-separator">/</span>
+                <span id="duration-time">00:00</span>
+              </div>
+            </div>
+
+            <!-- Title in Player -->
+            <div class="player-title-display" id="player-title-display">
+              Select a title
+            </div>
+            <!-- Right Controls: Settings, Theater, Fullscreen -->
+            <div class="controls-right">
+              <div class="settings-container">
+                <button id="settings-btn" class="player-btn" title="Settings"><i class="fa-solid fa-gear"></i></button>
+                <div class="settings-menu" id="settings-menu" style="display: none;">
+                  <span class="settings-menu-title">Quality Resolution</span>
+                  <button class="settings-option active" data-res="Auto">Auto</button>
+                  <button class="settings-option" data-res="1080p">1080p (FHD)</button>
+                  <button class="settings-option" data-res="720p">720p (HD)</button>
+                  <button class="settings-option" data-res="480p">480p (SD)</button>
+                </div>
+              </div>
+              <button id="theater-btn" class="player-btn" title="Theater Mode"><i class="fa-solid fa-rectangle-ad"></i></button>
+              <button id="fullscreen-btn" class="player-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big Play Button Overlay -->
+        <button class="big-play-btn" id="big-play-btn"><i class="fa-solid fa-play"></i></button>
+      </div>
+      <!-- Leaderboard Banner Ad -->
+      <div class="ad-placeholder banner-ad">
+        <span class="ad-badge">Advertisement</span>
+        <span class="ad-text">Ads Here (728x90 Leaderboard Banner)</span>
+      </div>
+
+      <!-- Emoji Interactive Reactions deck -->
+      <section class="reactions-section">
+        <span class="reactions-prompt">How do you react?</span>
+        <div class="reactions-deck">
+          <button class="reaction-btn" data-reaction="love">
+            <span class="reaction-emoji">❤️</span>
+            <span class="reaction-label">Love</span>
+            <span class="reaction-count" id="count-love">0</span>
+          </button>
+          <button class="reaction-btn" data-reaction="like">
+            <span class="reaction-emoji">👍</span>
+            <span class="reaction-label">Like</span>
+            <span class="reaction-count" id="count-like">0</span>
+          </button>
+          <button class="reaction-btn" data-reaction="funny">
+            <span class="reaction-emoji">😂</span>
+            <span class="reaction-label">Funny</span>
+            <span class="reaction-count" id="count-funny">0</span>
+          </button>
+          <button class="reaction-btn" data-reaction="wow">
+            <span class="reaction-emoji">😮</span>
+            <span class="reaction-label">Wow</span>
+            <span class="reaction-count" id="count-wow">0</span>
+          </button>
+          <button class="reaction-btn" data-reaction="sad">
+            <span class="reaction-emoji">😢</span>
+            <span class="reaction-label">Sad</span>
+            <span class="reaction-count" id="count-sad">0</span>
+          </button>
+        </div>
+      </section>
+
+       <!-- Details Section (Tabbed Navigation) -->
+      <section class="details-section">
+        <div class="details-header">
+          <div class="title-meta">
+            <h1 id="active-title">Loading title...</h1>
+            <div class="meta-badges">
+              <span class="badge badge-rating" id="active-rating"><i class="fa-solid fa-star"></i> 4.5</span>
+              <span class="badge badge-rank" id="active-rank">#0 Globally</span>
+              <span class="badge badge-duration" id="active-duration">120 min</span>
+              <span class="badge badge-country" id="active-country">USA</span>
+            </div>
+          </div>
+          <div class="details-studio-info">
+            <span class="studio-label">Production Studio:</span>
+            <span class="studio-value" id="active-studio">Studio Name</span>
+          </div>
+        </div>
+
+        <!-- Details Navigation Tabs -->
+        <div class="details-tabs">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="cast">Cast & Crew</button>
+          <button class="tab-btn" data-tab="reviews">Reviews</button>
+        </div>
+
+        <!-- Tab contents -->
+        <div class="tab-content active" id="tab-overview">
+          <p class="movie-description" id="active-description">Loading description...</p>
+        </div>
+        <div class="tab-content" id="tab-cast">
+          <div class="cast-grid" id="active-cast">
+            <!-- Cast list will be dynamically rendered -->
+          </div>
+        </div>
+        <div class="tab-content" id="tab-reviews">
+          <div class="reviews-list">
+            <div class="review-item">
+              <div class="review-author">
+                <span class="author-name">Alex Johnson</span>
+                <span class="review-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></span>
+              </div>
+              <p class="review-text">Absolutely stunning animation and visual storytelling. A masterclass in open source cinema production!</p>
+            </div>
+            <div class="review-item">
+              <div class="review-author">
+                <span class="author-name">Clara Vance</span>
+                <span class="review-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span>
+              </div>
+              <p class="review-text">The colors and characters are rich. Custom player matches the premium vibe of the platform.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR: Contextual Playlist / Seasons list / Favorites -->
+    <aside class="sidebar-right" id="sidebar-right">
+      <!-- Drag handle on left side of right sidebar -->
+      <div class="resize-handle-right" id="resize-handle-right"></div>
+      <div class="sidebar-header">
+        <h2 id="right-sidebar-title">My Favorites</h2>
+        <span class="sidebar-desc" id="right-sidebar-desc">Ranked by your reactions</span>
+      </div>
+      <!-- Medium Rectangle Ad Slot -->
+      <div class="ad-placeholder sidebar-ad">
+        <span class="ad-badge">Advertisement</span>
+        <span class="ad-text">Ads Here (300x250 Rectangle)</span>
+      </div>
+
+      <!-- Content wrapper -->
+      <div class="playlist-container" id="right-playlist-container">
+        <!-- Movies: list of favorites dynamically loaded, with delete action -->
+        <!-- TV Shows: Seasons dropdown and Episode lists -->
+        <div class="empty-playlist" id="empty-playlist">
+          <i class="fa-solid fa-heart-circle-xmark empty-icon"></i>
+          <p>Your playlist is empty.</p>
+          <span>React to movies or click cards in the catalog to add them to your favorites.</span>
+        </div>
+        <div class="favorites-stack" id="favorites-stack" style="display: none;">
+          <!-- Dynamically filled with ranked cards -->
+        </div>
+        <div class="episodes-view" id="episodes-view" style="display: none;">
+          <button class="back-to-favs-btn" id="back-to-favs-btn">
+            <i class="fa-solid fa-arrow-left"></i> Back to Favorites
+          </button>
+          <div class="season-select-wrapper">
+            <label for="season-select">Season:</label>
+            <select id="season-select" class="season-select">
+              <option value="1">Season 1</option>
+            </select>
+          </div>
+          <div class="episodes-list" id="episodes-list">
+            <!-- Dynamic episodes -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Detailed Hover Popover element (Global overlay) -->
+  <div id="hover-popover" class="hover-popover" style="display: none;">
+    <div class="popover-content">
+      <h3 class="popover-title">Title</h3>
+      <div class="popover-meta">
+        <span class="popover-rating"><i class="fa-solid fa-star"></i> 4.5</span>
+        <span class="popover-rank">#1 Globally</span>
+        <span class="popover-duration">120 min</span>
+      </div>
+      <p class="popover-description">Short description goes here.</p>
+      <div class="popover-details-row">
+        <strong>Actors:</strong> <span class="popover-actors">Actor Names</span>
+      </div>
+      <div class="popover-details-row">
+        <strong>Studio:</strong> <span class="popover-studio">Studio Name</span>
+      </div>
+      <div class="popover-details-row">
+        <strong>Country:</strong> <span class="popover-country">Country Origin</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tiled Grid Modal -->
+  <div id="browse-modal" class="browse-modal" style="display: none;">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 id="modal-title">Browse Content</h2>
+        <button id="modal-close-btn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid" id="modal-grid">
+          <!-- Populated dynamically with card tiles -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sign Up Modal -->
+  <div id="signup-modal" class="signup-modal" style="display: none;">
+    <div class="signup-overlay" id="signup-overlay"></div>
+    <div class="signup-container">
+      <div class="signup-header">
+        <h2 class="signup-logo">LIVESTREAM</h2>
+        <button id="signup-close-btn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="signup-body">
+        <h3>Create Your Account</h3>
+        <p class="signup-subtitle">Join us to start personalizing your favorite catalog streams.</p>
+
+        <form id="signup-form">
+          <div class="input-group">
+            <label for="signup-name">Full Name</label>
+            <input type="text" id="signup-name" required placeholder="John Doe">
+          </div>
+          <div class="input-group">
+            <label for="signup-email">Email Address</label>
+            <input type="email" id="signup-email" required placeholder="john@example.com">
+          </div>
+          <div class="input-group">
+            <label for="signup-password">Password</label>
+            <input type="password" id="signup-password" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="signup-submit-btn">Create Account</button>
+        </form>
+        <div class="social-divider">
+          <span>Or sign up with</span>
+        </div>
+
+        <div class="social-buttons">
+          <button class="social-btn google-btn"><i class="fa-brands fa-google"></i> Google</button>
+          <button class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
+        </div>
+        <p class="signup-footer-text">Already have an account? <a href="#" id="login-link">Login instead</a></p>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+
+</body>
+</html>

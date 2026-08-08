@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Upload Stream Content</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Admin specific layout adjustments */
+    .admin-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 32px;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-glow);
+    }
+
+    .admin-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 16px;
+    }
+
+    .admin-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+    }
+
+    .back-home-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      transition: var(--transition-fast);
+    }
+    .back-home-btn:hover {
+      color: var(--accent-indigo);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+      transition: var(--transition-smooth);
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-indigo);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--glass-border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .file-input-wrapper:hover {
+      border-color: var(--accent-purple);
+      background: rgba(139, 92, 246, 0.03);
+    }
+    .file-input-wrapper i {
+      font-size: 1.8rem;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .source-selection {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .source-tab {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .source-tab.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-indigo);
+      color: var(--text-main);
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-indigo) 100%);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 14px 28px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      transition: var(--transition-smooth);
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Progress bar upload status */
+    .upload-progress-container {
+      display: none;
+      margin-top: 24px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-indigo));
+      border-radius: 4px;
+      transition: width 0.1s ease;
+    }
+
+    .status-msg {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      display: none;
+    }
+
+    .status-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+    <header class="app-header">
+    <div class="header-left">
+      <a href="/" class="brand-logo">LIVESTREAM</a>
+    </div>
+    <div class="header-right">
+      <a href="/" class="back-home-btn">
+        <i class="fa-solid fa-arrow-left-long"></i>
+        <span>Back to Livestream</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-header-row">
+      <h2 class="admin-title">Upload Content Dashboard</h2>
+      <span class="catalog-count"><i class="fa-solid fa-shield-halved"></i> Admin Mode</span>
+    </div>
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="form-grid">
+
+        <!-- Title -->
+        <div class="form-group full-width">
+          <label for="title">Title *</label>
+          <input type="text" id="title" name="title" required placeholder="e.g. Inception">
+        </div>
+        <!-- Type -->
+        <div class="form-group">
+          <label for="type">Category Type *</label>
+          <select id="type" name="type" required>
+            <option value="Movie">Movie</option>
+            <option value="TV Show">TV Show</option>
+          </select>
+        </div>
+    <!-- Release Date -->
+        <div class="form-group">
+          <label for="releaseDate">Release Date</label>
+          <input type="date" id="releaseDate" name="releaseDate">
+        </div>
+        <!-- Actors -->
+        <div class="form-group">
+          <label for="actors">Principal Actors (comma separated)</label>
+          <input type="text" id="actors" name="actors" placeholder="Leonardo DiCaprio, Joseph Gordon-Levitt">
+        </div>
+        <!-- Studio -->
+        <div class="form-group">
+          <label for="studio">Production Studio</label>
+          <input type="text" id="studio" name="studio" placeholder="Warner Bros. Pictures">
+        </div>
+        <!-- Country of Origin -->
+        <div class="form-group">
+          <label for="country">Country of Origin</label>
+          <select id="country" name="country">
+            <option value="United States">United States</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Japan">Japan</option>
+            <option value="France">France</option>
+            <option value="South Korea">South Korea</option>
+            <option value="Netherlands">Netherlands</option>
+            <option value="Canada">Canada</option>
+          </select>
+        </div>
+
+        <!-- Genres -->
+        <div class="form-group">
+          <label for="genres">Genres (comma separated)</label>
+          <input type="text" id="genres" name="genres" placeholder="Sci-Fi, Action, Thriller">
+        </div>
+        <!-- Rating -->
+        <div class="form-group">
+          <label for="rating">Initial Rating (1.0 to 5.0)</label>
+          <input type="number" id="rating" name="rating" min="1" max="5" step="0.1" value="4.0">
+        </div>
+        <!-- Poster Image Source Selection -->
+        <div class="form-group full-width">
+          <label>Poster Image Source</label>
+          <div class="source-selection">
+            <span class="source-tab active" id="poster-tab-url">URL Link</span>
+            <span class="source-tab" id="poster-tab-file">File Upload</span>
+          </div>
+          <!-- Poster URL Input -->
+          <div id="poster-url-container">
+            <input type="text" id="posterUrl" name="posterUrl" placeholder="https://domain.com/poster.jpg">
+          </div>
+          <!-- Poster File Input -->
+          <div id="poster-file-container" style="display: none;">
+            <div class="file-input-wrapper">
+              <i class="fa-solid fa-image"></i>
+              <p>Drag or browse cover image file</p>
+              <input type="file" id="posterFile" name="posterFile" accept="image/*">
+            </div>
+            <p id="poster-file-name" style="font-size: 0.8rem; color: var(--accent-purple); margin-top: 4px; display: none;"></p>
+          </div>
+        </div>
+
+    <!-- Video Source Selection -->
+        <div class="form-group full-width">
+          <label>Video Stream Source</label>
+          <div class="source-selection">
+            <span class="source-tab active" id="video-tab-url">URL Link / Stream</span>
+            <span class="source-tab" id="video-tab-file">File Upload</span>
+          </div>
+          <!-- Video URL Input -->
+          <div id="video-url-container">
+            <input type="text" id="videoUrl" name="videoUrl" placeholder="https://domain.com/movie.mp4">
+          </div>
+          <!-- Video File Input -->
+          <div id="video-file-container" style="display: none;">
+            <div class="file-input-wrapper">
+              <i class="fa-solid fa-video"></i>
+              <p>Drag or browse movie video file (MP4, WebM)</p>
+              <input type="file" id="videoFile" name="videoFile" accept="video/*">
+            </div>
+            <p id="video-file-name" style="font-size: 0.8rem; color: var(--accent-indigo); margin-top: 4px; display: none;"></p>
+          </div>
+        </div>
+        <!-- Description -->
+        <div class="form-group full-width">
+          <label for="description">Summary Description</label>
+          <textarea id="description" name="description" rows="4" placeholder="Brief outline of the movie or series plot..."></textarea>
+        </div>
+        <div class="form-group full-width">
+          <button type="submit" class="upload-btn">
+            <i class="fa-solid fa-rocket"></i>
+            <span>Publish to Livestream</span>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Upload Progress indicator -->
+    <div class="upload-progress-container" id="progress-container">
+      <div class="progress-header">
+        <span id="progress-status">Uploading files...</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-bar" id="progress-bar"></div>
+      </div>
+    </div>
+    <!-- Status Message Alert box -->
+    <div class="status-msg" id="status-box"></div>
+  </main>
+  <script src="admin.js"></script>
+
+</body>
+</html>
