@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- API CALLS ---
-  function fetchCatalog() {
+  /*function fetchCatalog() {
     fetch('/api/movies')
       .then(res => res.json())
       .then(data => {
@@ -116,6 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to load catalog:", err);
         catalogList.innerHTML = `<div class="error-msg">Error loading catalog. Please check backend.</div>`;
       });
+  }*/
+
+  function fetchCatalog(){
+    Promise.all([
+      fetch('/api/movies').then(res=>res.json()),
+      fetch('/api/trending').then(res=>res.json()).catch(()=>[])
+    ])
+    .then(([uploadedMovies, trendingTrailers])=>{
+      appData = [...trendingTrailers, ...uploadedMovies];
+      renderCatalog();
+      if(appData > 0){
+        selectItem(appData[0]);
+
+      }
+    }).catch(err=>{
+       console.error('Failed to load catalog', err);
+      catalogList.innerHTML = `<div class="error-msg">Error loading catalog. Please check backend.</div>`;
+    });
+     
+
   }
 
   // --- EVENT LISTENERS ---
@@ -687,7 +707,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- CUSTOM VIDEO PLAYER LOGIC ---
-  function loadVideo(url, title) {
+  /*function loadVideo(url, title) {
     playerTitleDisplay.textContent = title;
     videoPlayer.src = url;
     videoPlayer.load();
@@ -695,7 +715,43 @@ document.addEventListener('DOMContentLoaded', () => {
     progressHandle.style.left = '0%';
     currentTimeDisplay.textContent = '00:00';
     durationTimeDisplay.textContent = '00:00';
+  }*/
+ 
+  function loadVideo(url, title){
+    playerTitleDisplay.textContent = title;
+    const youtubeplayer = document.getElementById('youtube-player');
+    const isYoutube = url.includes('youtube.com/embed');
+
+    if(isYoutube){
+      //trailer hand off
+
+      videoPlayer.pause();
+      videoPlayer.style.display = 'none';
+      playerControls.style.display = 'none';
+      bigPlayBtn.style.display = 'none';
+      youtubeplayer.src = url + '?rel=0';
+      youtubeplayer.style.display = 'block';
+    }else{
+      //normal mode
+      youtubeplayer.src = '';
+      youtubeplayer.style.display = 'none';
+      videoPlayer.style.display = 'block';
+       playerControls.style.display = 'flex';
+      bigPlayBtn.style.display = 'flex';
+      videoPlayer.src = url;
+      videoPlayer.load();
+    }
+
+    progressFill.style.width = '0%';
+    progressHandle.style.left = '0%';
+    currentTimeDisplay.textContent = '00:00';
+    durationTimeDisplay.textContent = '00:00';
+
   }
+
+  /**************************8888888888 */
+
+
   function togglePlay() {
     if (videoPlayer.paused) {
       videoPlayer.play()

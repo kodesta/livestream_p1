@@ -504,7 +504,9 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
 }
+
 
 /* Resizer splitter */
 .resize-handle {
@@ -534,6 +536,7 @@ a {
   transition: var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .catalog-card:hover {
   background: rgba(255, 255, 255, 0.03);

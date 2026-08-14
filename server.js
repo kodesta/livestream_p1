@@ -183,6 +183,49 @@ app.get('/api/movies', (req, res) => {
   const db = readDatabase();
   res.json(db);
 });
+// Fetch trending trailers from KinoCheck (no API key needed under 1000 req/day):
+app.get('/api/trending', async(req,res)=>{
+  try{
+    const response = await fetch('https://api.kinocheck.com/trailers/trending?limit=20');
+    const data = await response.json();
+
+   //console.log('KEYS:', Object.keys(data));//temp debug
+
+    // Reshape KinoCheck's video objects into your catalog card format
+    const trending = Object.values(data)
+      .filter(video => video.resource) // only keep ones linked to a movie/show
+      .map(video =>({
+        id:'kc-' + video.id,
+        title: video.title,
+        type: video.resource.type === 'show'? 'TV Show' : 'Movie',
+        description: `Official trailer - ${video.views} On Youtube`,
+        rating:4.0,
+        worldRank: 'trending',
+        duration: 'trailer',
+        actors:'N/A',
+        studio: 'N/A',
+        country: 'N/A',
+        genres: video.categories || [],
+        poster: video.youtube_thumbnail,
+        videoUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,
+        reactions: {love:0,like:0,funny:0,wow:0,sad:0},
+        releaseDate: video.published ? video.published.split('T')[0] : '2024-01-01'
+      }));
+      res.json(trending);
+
+  }catch(err){
+    console.error("catch error", err);
+    res.status(500).json({error: ' failed to fetch trending trailer'});
+
+  }
+
+});
+
+
+
+
+
+
 // Add reaction to a movie/show
 app.post('/api/movies/:id/react', (req, res) => {
   const { id } = req.params;
