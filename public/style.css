@@ -129,7 +129,7 @@ a {
 }
 
 .brand-logo {
-  font-family: 'Bebas Neue', sans-serif;
+ /* font-family: 'Bebas Neue', sans-serif;
   font-size: 2.2rem;
   letter-spacing: 1.5px;
   background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
@@ -137,7 +137,14 @@ a {
   -webkit-text-fill-color: transparent;
   display: inline-block;
   font-weight: bold;
-  transition: var(--transition-smooth);
+  transition: var(--transition-smooth);*/
+
+  
+}
+.livestream-logo{
+  width: 165px;
+  height: auto;
+
 }
 .brand-logo:hover {
   filter: drop-shadow(0 0 8px var(--accent-indigo));
@@ -507,6 +514,36 @@ a {
   
 }
 
+/*add to favorites*/
+.add-to-fav {
+  width: 22px;
+  height: 22px;
+  border-radius: 100%;
+  background: rgb(99, 241, 99);
+  border: 2px solid rgb(35, 245, 109);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: absolute;
+  z-index: 3;
+  margin-top: 10px;
+  margin-left: 10px;
+  text-align: center;
+  transition: 1s ease;
+  padding-top:0px;
+  display: none;
+ 
+}
+.add-to-fav:hover{
+  background: rgb(227, 114, 16);
+  border: 2px solid rgb(227, 152, 24);
+
+}
+
 
 /* Resizer splitter */
 .resize-handle {
@@ -527,6 +564,7 @@ a {
 /* Catalog Card */
 .catalog-card {
   display: flex;
+  flex-direction:column;
   gap: 12px;
   padding: 8px;
   background: var(--bg-card);
@@ -542,6 +580,36 @@ a {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-2px);
+
+  /*another add-to-fav css*/
+  .add-to-fav {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(99, 241, 99);
+  border: 2px solid rgb(35, 245, 109);
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: absolute;
+  z-index: 3;
+  margin-top: 10px;
+  margin-left: 10px;
+  text-align: center;
+  transition: 1s ease;
+  padding-top:-30px;
+  display: block;
+ 
+}
+.add-to-fav:hover{
+  background: rgb(227, 114, 16);
+  border: 2px solid rgb(227, 152, 24);
+
+}
 }
 .catalog-card.active {
   background: rgba(99, 102, 241, 0.08);
@@ -550,12 +618,20 @@ a {
 }
 
 .card-poster-wrapper {
-  width: 70px;
-  height: 100px;
+  width: 100%;
+ /* height: auto;*/
   border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
   background: #1c1c24;
+}
+
+.poster-landscape{
+  aspect-ratio: 16/9;/*trailer and thumbnails*/
+}
+.poster-portrait{
+  aspect-ratio: 2/3;
+  max-height: 140px;  /*real movie posters*/
 }
 
 .card-poster {
@@ -573,7 +649,7 @@ a {
 }
 
 .card-title {
-  font-size: 0.95rem;
+  font-size: 0.80rem;
   font-weight: 600;
   color: var(--text-main);
   white-space: nowrap;
@@ -600,7 +676,7 @@ a {
 }
 
 .card-genres {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 4px;
 }
@@ -658,8 +734,8 @@ a {
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  gap: 24px;
+  padding: 10px;
+  gap: 10px;
 }
 
 /* Custom Video Player Container */
@@ -672,7 +748,7 @@ a {
   background: #000;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -902,28 +978,28 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border-radius: 12px;
   border: 1px solid var(--glass-border);
 }
 
 .reactions-prompt {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .reactions-deck {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .reaction-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 4px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--glass-border);
@@ -941,13 +1017,13 @@ a {
 }
 
 .reaction-emoji {
-  font-size: 1.2rem;
+  font-size: .95rem;
   line-height: 1;
 }
 
 .reaction-label {
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.6rem;
+  font-weight: 400;
   color: var(--text-muted);
 }
 .reaction-btn:hover .reaction-label,
@@ -957,7 +1033,7 @@ a {
 
 .reaction-count {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--accent-indigo);
   background: rgba(99, 102, 241, 0.1);
   padding: 2px 6px;
@@ -1009,7 +1085,7 @@ a {
 .title-meta h1 {
   font-family: 'Montserrat', sans-serif;
   font-weight: 800;
-  font-size: 1.8rem;
+  font-size: .95rem;
   margin-bottom: 12px;
   letter-spacing: -0.5px;
 }
@@ -1252,14 +1328,14 @@ a {
 .favorites-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .fav-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: var(--bg-card);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
@@ -1272,13 +1348,13 @@ a {
 }
 
 .fav-rank-badge {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: rgba(99, 102, 241, 0.1);
   border: 1px solid rgba(99, 102, 241, 0.2);
   color: var(--accent-indigo);
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1306,10 +1382,10 @@ a {
 }
 
 .fav-title {
-  font-size: 0.88rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-main);
-  white-space: nowrap;
+ /* white-space: nowrap;*/
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;

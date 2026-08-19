@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabContents = document.querySelectorAll('.tab-content');
 
   // Right Sidebar Elements
+  
   const rightSidebarTitle = document.getElementById('right-sidebar-title');
   const rightSidebarDesc = document.getElementById('right-sidebar-desc');
   const rightPlaylistContainer = document.getElementById('right-playlist-container');
@@ -75,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const episodesView = document.getElementById('episodes-view');
   const seasonSelect = document.getElementById('season-select');
   const episodesList = document.getElementById('episodes-list');
+ const resizeRight = document.getElementById('resize-handle-right');
+const sidebarRight = document.getElementById('sidebar-right');
   // Global Hover Popover
   const hoverPopover = document.getElementById('hover-popover');
   // Modal Elements
@@ -126,13 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(([uploadedMovies, trendingTrailers])=>{
       appData = [...trendingTrailers, ...uploadedMovies];
       renderCatalog();
-      if(appData > 0){
+      if(appData.length > 0){
         selectItem(appData[0]);
 
       }
     }).catch(err=>{
        console.error('Failed to load catalog', err);
-      catalogList.innerHTML = `<div class="error-msg">Error loading catalog. Please check backend.</div>`;
+      catalogList.innerHTML = `<div class="error-msg">Error loading catalog. Please check connection.</div>`;
     });
      
 
@@ -240,6 +243,40 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeHandle.classList.remove('active');
       }
     });
+
+    /***/
+      // right Sidebar Resize Splitter
+    let rightResizing = false;
+    resizeRight.addEventListener('mousedown', (e) => {
+      console.log('mousedown fired on right handle');
+      rightResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      resizeRight.classList.add('active');
+    });
+    document.addEventListener('mousemove', (e) => {
+      console.log('dragging, newWidth =', window.innerWidth - e.clientX);
+      if (!rightResizing) return;
+      let newWidth = window.innerWidth - e.clientX;
+      if (newWidth < 120) {
+        // Compact icon mode
+        sidebarRight.classList.add('compact');
+      } else {
+        sidebarRight.classList.remove('compact');
+        if (newWidth > 500) newWidth = 500;
+        if (newWidth < 200) newWidth = 200;
+        sidebarRight.style.width = newWidth + 'px';
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if (rightResizing) {
+        rightResizing = false;
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+        resizeRight.classList.remove('active');
+      }
+    });
+     /***** */
 
     // Custom Video Player Controls
     playPauseBtn.addEventListener('click', togglePlay);
@@ -548,11 +585,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = `catalog-card ${activeItem && activeItem.id === item.id ? 'active' : ''}`;
       card.setAttribute('data-id', item.id);
+      const isTrailer = item.duration ==='trailer';
+      const posterShape = isTrailer ? 'poster-landscape': 'poster-portrait';
 
       const genresHtml = item.genres.slice(0, 2).map(g => `<span class="genre-badge">${g}</span>`).join('');
 
+
       card.innerHTML = `
-        <div class="card-poster-wrapper">
+         
+        <div class="card-poster-wrapper ${posterShape}">
+         <a href="/"><span class="add-to-fav">+</span></a>
           <img class="card-poster" src="${item.poster}" alt="${item.title}">
         </div>
         <div class="card-info">
