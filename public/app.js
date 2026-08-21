@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const catalogCount = document.getElementById('catalog-count');
   const catalogTitle = document.getElementById('catalog-title');
   const resizeHandle = document.getElementById('resize-handle');
+  
 
   // Video Player Elements
   const videoPlayer = document.getElementById('main-video-player');
@@ -481,22 +482,29 @@ const sidebarRight = document.getElementById('sidebar-right');
           }
           // Select first
           selectItem(item);
+
+          //let needRender = false;
           // Update left sidebar catalog criteria filter
           if (filterType === 'category') {
             currentFilters.category = filterVal;
             currentFilters.genre = '';
             currentFilters.country = '';
+            //needRender = true;
           } else if (filterType === 'genre') {
             currentFilters.category = 'all';
             currentFilters.genre = filterVal;
             currentFilters.country = '';
+            //needRender = true;
           } else if (filterType === 'country') {
             currentFilters.category = 'all';
             currentFilters.genre = '';
             currentFilters.country = filterVal;
+            //needRender = true;
           }
+          //if(needRender){
           updateCatalogTitle();
           renderCatalog();
+          //}
           // Highlight card in catalog list
           setTimeout(() => {
             document.querySelectorAll('.catalog-card').forEach(c => {
@@ -541,6 +549,7 @@ const sidebarRight = document.getElementById('sidebar-right');
 
   function renderCatalog() {
     let filtered = [...appData];
+
     // Search filters
     if (currentFilters.search) {
       const q = currentFilters.search;
@@ -579,6 +588,9 @@ const sidebarRight = document.getElementById('sidebar-right');
       catalogList.innerHTML = `<div class="empty-results">No results found.</div>`;
       return;
     }
+  
+    
+    
 
     catalogList.innerHTML = '';
     filtered.forEach(item => {
@@ -609,6 +621,8 @@ const sidebarRight = document.getElementById('sidebar-right');
         </div>
       `;
 
+    
+      
       // Hover overlay trigger
       card.addEventListener('mouseenter', (e) => showPopover(e, item));
       card.addEventListener('mousemove', movePopover);
@@ -620,9 +634,37 @@ const sidebarRight = document.getElementById('sidebar-right');
         document.querySelectorAll('.catalog-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
       });
+
+        //** */ Add-to-favorites button handler (per card, with correct item in scope)
+      const addTofav = card.querySelector('.add-to-fav');
+      addTofav.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        
+        
+        addToFavorites(item);
+      })
+
+
       catalogList.appendChild(card);
+
+
     });
+    
+      
+
   }
+
+  //addTofavoriteIcon
+
+  /*function plusAdd(){
+
+    const addTofav = document.getElementById('add-to-fav');
+
+    addTofav.addEventListener('click', ()=>{
+      addToFavorites(item);
+    })
+  }*/
+  
 
   // --- DETAIL HOVER POPOVER ---
   function showPopover(e, item) {
@@ -676,7 +718,8 @@ const sidebarRight = document.getElementById('sidebar-right');
     // Reset reaction button states
     reactionButtons.forEach(b => b.classList.remove('active'));
     // Both Movies and TV Shows are auto-added to favorites
-    addToFavorites(item);
+    //addToFavorites(item);
+   
     // Default right sidebar to Favorites list when selecting a new item
     rightSidebarTitle.textContent = "My Favorites";
     rightSidebarDesc.textContent = "Ranked by your reactions";
