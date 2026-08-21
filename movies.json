@@ -145,5 +145,55 @@
         ]
       }
     ]
+  },
+  {
+    "id": "movie-1787329614951",
+    "title": "bojo",
+    "type": "Movie",
+    "description": "it is a film about war...",
+    "rating": 4,
+    "worldRank": "#6 Globally",
+    "duration": "120 min",
+    "actors": "Unknown",
+    "studio": "yelocard",
+    "country": "United Kingdom",
+    "genres": [
+      "sci-fi"
+    ],
+    "poster": "https://via.placeholder.com/300x450?text=No+Poster",
+    "reactions": {
+      "love": 0,
+      "like": 0,
+      "funny": 0,
+      "wow": 0,
+      "sad": 0
+    },
+    "releaseDate": "2026-08-21",
+    "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  },
+  {
+    "id": "movie-1787330080659",
+    "title": "Dragon of Asgard",
+    "type": "Movie",
+    "description": "DRAGON OF ASGARD is about thor's fight against the demons from the under world",
+    "rating": 4,
+    "worldRank": "#9 Globally",
+    "duration": "120 min",
+    "actors": "Jonh Groub",
+    "studio": "Polotv",
+    "country": "United States",
+    "genres": [
+      "sci-fi"
+    ],
+    "poster": "/uploads/posterFile-1787330080087-544616248.png",
+    "reactions": {
+      "love": 0,
+      "like": 0,
+      "funny": 0,
+      "wow": 0,
+      "sad": 0
+    },
+    "releaseDate": "2026-08-05",
+    "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
   }
 ]
