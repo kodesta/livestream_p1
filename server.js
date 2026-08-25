@@ -1,7 +1,16 @@
+
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { PrismaClient } = require('./generated/prisma');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const authRouter = require('./routes/auth.cjs');
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,6 +19,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 
 // Ensure directories exist

@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+model episodes {
+  episode_id     Int      @id @default(autoincrement())
+  season_id      Int?
+  episode_number Int
+  title          String?  @db.VarChar(255)
+  duration       String?  @db.VarChar(55)
+  description    String?
+  video_url      String?  @db.VarChar(500)
+  seasons        seasons? @relation(fields: [season_id], references: [season_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model favorites {
+  favorite_id Int       @id @default(autoincrement())
+  user_id     Int?
+  title_id    Int?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  titles      titles?   @relation(fields: [title_id], references: [title_id], onDelete: Cascade, onUpdate: NoAction)
+  users       users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model genres {
+  genre_id     Int            @id @default(autoincrement())
+  genre_name   String         @unique @db.VarChar(55)
+  title_genres title_genres[]
+}
+
+model reactions {
+  reaction_id   Int       @id @default(autoincrement())
+  user_id       Int?
+  title_id      Int?
+  type_reaction String?   @db.VarChar(25)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  titles        titles?   @relation(fields: [title_id], references: [title_id], onDelete: Cascade, onUpdate: NoAction)
+  users         users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model seasons {
+  season_id     Int        @id @default(autoincrement())
+  title_id      Int?
+  season_number Int
+  episodes      episodes[]
+  titles        titles?    @relation(fields: [title_id], references: [title_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model title_genres {
+  title_id Int
+  genre_id Int
+  genres   genres @relation(fields: [genre_id], references: [genre_id], onDelete: Cascade, onUpdate: NoAction)
+  titles   titles @relation(fields: [title_id], references: [title_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([title_id, genre_id])
+}
+
+model titles {
+  title_id     Int            @id @default(autoincrement())
+  title        String         @db.VarChar(255)
+  type_title   String?        @db.VarChar(55)
+  description  String?
+  rating       Decimal?       @db.Decimal(2, 1)
+  world_rank   String?        @db.VarChar(55)
+  duration     String?        @db.VarChar(55)
+  actors       String?
+  studio       String?        @db.VarChar(255)
+  country      String?        @db.VarChar(55)
+  poster_url   String?        @db.VarChar(500)
+  release_date DateTime?      @db.Date
+  created_at   DateTime?      @default(now()) @db.Timestamp(6)
+  favorites    favorites[]
+  reactions    reactions[]
+  seasons      seasons[]
+  title_genres title_genres[]
+}
+
+model users {
+  user_id       Int         @id @default(autoincrement())
+  email         String      @unique @db.VarChar(255)
+  password_hash String      @db.VarChar(255)
+  display_name  String?     @db.VarChar(255)
+  created_at    DateTime?   @default(now()) @db.Timestamp(6)
+  favorites     favorites[]
+  reactions     reactions[]
+}

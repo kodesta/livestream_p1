@@ -3,3 +3,7 @@ node_modules/
 livestream.png
 liv.png
 lives.png
+/generated/prisma
+.agents
+.claude
+.windsurf
