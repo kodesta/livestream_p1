@@ -13,7 +13,11 @@ router.post('/signup', async(req,res)=>{
     const {email, password, display_name} = req.body;
 
     //validation
-    if(!email || !password){
+     if(!email.includes|| !password){
+        return res.status(400).json({error: ' email and password needed'});
+
+    }
+    if(!email.includes('@')|| password.length < 8){
         return res.status(400).json({error: 'your email and password is incorrect'});
 
     }
@@ -56,6 +60,24 @@ router.post('/signup', async(req,res)=>{
         console.error('sign up error', error);
         return res.status(500).json({error: 'internal server error'});
     }
+})
+
+//login
+
+router.get('/login', async(req,res)=>{
+    const user = req.body
+    if( user === 'true'){
+        res.status(200).json({message: 'you are logged in'})
+
+    }
+
+    try{
+
+    }catch(err){
+        console.err('try again');
+        return res.status(500).json({error: 'you must be logged in'});
+    }
+
 })
 
 module.exports = router;

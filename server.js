@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { PrismaClient } = require('./generated/prisma');
 const { PrismaPg } = require('@prisma/adapter-pg');
-const authRouter = require('./routes/auth.cjs');
+const authRoutes = require('./routes/auth.cjs');
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -19,6 +19,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/api/auth', authRoutes)
 
 
 

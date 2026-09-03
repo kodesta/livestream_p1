@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const hamburgerBtn = document.getElementById('hamburger-btn');
   const searchInput = document.getElementById('search-input');
   const searchClearBtn = document.getElementById('search-clear-btn');
+  //modal elements
+  
+  const loginModal = document.getElementById('login-modal');
+  const loginLink = document.getElementById('login-link');
+  const loginCloseBtn = document.getElementById('loginclose-btn');
+  const loginOverlay = document.getElementById('loginoverlay');
   // Navigation Drawer Elements
   const drawerOverlay = document.getElementById('drawer-overlay');
   const navDrawer = document.getElementById('nav-drawer');
@@ -94,6 +100,12 @@ const sidebarRight = document.getElementById('sidebar-right');
   const signupOverlay = document.getElementById('signup-overlay');
   const signupCloseBtn = document.getElementById('signup-close-btn');
   const signupForm = document.getElementById('signup-form');
+  //login
+  const loginBtn = document.getElementById('login-btn');
+  //logout
+  const logOut = document.getElementById('log-out');
+   //icon for log
+   const icons = document.querySelector('user-profile');
 
   // --- INITIALIZATION ---
   init();
@@ -380,6 +392,25 @@ const sidebarRight = document.getElementById('sidebar-right');
       }
     });
 
+    //Login modal
+
+    loginLink.addEventListener('click', (e)=>{
+      e.preventDefault();
+      signupModal.style.display = 'none';
+      loginModal.style.display = 'block';
+
+    })
+
+    //close login
+    loginCloseBtn.addEventListener('click', ()=>{
+      loginModal.style.display = 'none';
+    })
+
+    //close login via overlay
+    loginOverlay.addEventListener('click', ()=>{
+      loginModal.style.display = 'none';
+    })
+
     // Sign Up Modal
     signupBtn.addEventListener('click', () => {
       signupModal.style.display = 'flex';
@@ -392,13 +423,66 @@ const sidebarRight = document.getElementById('sidebar-right');
       // Wire this up to a real /api/signup endpoint once accounts are built.
       const name = document.getElementById('signup-name').value;
       showPlayerToast(`Welcome, ${name}! (Accounts coming soon)`);
+
+      loggedIn();
+
       signupForm.reset();
+      
       closeSignupModal();
     });
   }
 
+  //Loggedin confrimation
+  loginBtn.style.display = 'none';
+  function loggedIn(){
+     
+        signupBtn.style.display = 'none';
+        loginBtn.style.display = 'block';
+
+  }
+
+  
+
+  //Icon logout
+  function logout(){
+  icons.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const smallCard = document.querySelector('.log-out');
+
+    if (smallCard) {
+      smallCard.remove();
+      return;
+    }
+      smallCard = document.createElement('div');
+      smallCard.className = 'log-outy';
+      smallCard.style.cssText = `
+        position: absolute;
+        width:100px;
+        height: 200px;
+        top: 20px;
+        right: 20px;
+        background-color: white;
+        color: #171717;
+        z-index: 1000;
+        border: 1px solid rgba(255,255,255,0.08);
+        
+        animation: fadeIn 0.2s ease-out;
+      `;
+    
+   logOut.appendChild(smallCard)
+
+  })
+}
+logout()
+  
+
+  
+ 
+
+//---------
   function closeSignupModal() {
     signupModal.style.display = 'none';
+    
   }
 
   // --- SHOW DYNAMIC TOAST ON PLAYER ---
