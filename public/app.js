@@ -105,7 +105,7 @@ const sidebarRight = document.getElementById('sidebar-right');
   //logout
   const logOut = document.getElementById('log-out');
    //icon for log
-   const icons = document.querySelector('user-profile');
+   
 
   // --- INITIALIZATION ---
   init();
@@ -212,20 +212,67 @@ const sidebarRight = document.getElementById('sidebar-right');
 
     // Search input
     searchInput.addEventListener('input', () => {
-      currentFilters.search = searchInput.value.trim().toLowerCase();
-      if (currentFilters.search.length > 0) {
+      
+       const query = searchInput.value.trim().toLowerCase();
+        currentFilters.search = query;
+
+      if (query.length > 0) {
+
+       
         searchClearBtn.style.display = 'block';
+        showSearchDropdown(query);
       } else {
         searchClearBtn.style.display = 'none';
+        hideSearchDropdown();
       }
-      renderCatalog();
+     // renderCatalog();
+     
     });
+
+    //**key support
+    searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) return;
+
+    const result = appData.find(item =>
+      item.title?.toLowerCase().includes(query) ||
+      item.genres?.some(g => g.toLowerCase().includes(query)) ||
+      item.actors?.toLowerCase().includes(query) ||
+      item.studio?.toLowerCase().includes(query)
+    );
+
+    if (result) {
+      selectItem(result);
+      searchInput.value = '';
+      currentFilters.search = '';
+      searchClearBtn.style.display = 'none';
+      hideSearchDropdown();
+    }
+  }
+
+  // Arrow key navigation in dropdown
+  if (e.key === 'ArrowDown') {
+    const first = document.querySelector('.search-result-item');
+    if (first) first.focus();
+  }
+});
+
     searchClearBtn.addEventListener('click', () => {
       searchInput.value = '';
       currentFilters.search = '';
       searchClearBtn.style.display = 'none';
-      renderCatalog();
+      //renderCatalog();
+      hideSearchDropdown();
     });
+
+
+    document.addEventListener('click', (e)=>{
+      if(!searchInput.contains(e.target)){
+        hideSearchDropdown()
+
+      }
+    })
 
     // Left Sidebar Resize Splitter
     let isResizing = false;
@@ -430,50 +477,133 @@ const sidebarRight = document.getElementById('sidebar-right');
       
       closeSignupModal();
     });
+
+    //Icon logout
+ // Logged in confirmation
+function loggedIn() {
+  signupBtn.style.display = 'none';
+  //loginBtn.style.display = 'block';
+  document.querySelector('.user-profile').style.display = 'flex';
+}
+
+// Logout dropdown
+const userProfile = document.querySelector('.user-profile');
+const logOutContainer = document.getElementById('log-out');
+
+userProfile.addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  // Toggle dropdown
+  if (logOutContainer.innerHTML) {
+    logOutContainer.innerHTML = '';
+    return;
   }
 
-  //Loggedin confrimation
-  loginBtn.style.display = 'none';
-  function loggedIn(){
-     
-        signupBtn.style.display = 'none';
-        loginBtn.style.display = 'block';
+  logOutContainer.innerHTML = `
+    <div class="logout-card">
+      <p class="logout-username">My Account</p>
+      <button id="logout-btn" class="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Log Out
+      </button>
+    </div>
+  `;
 
+  // Handle logout click
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    signupBtn.style.display = 'block';
+    //loginBtn.style.display = 'none';
+    logOutContainer.innerHTML = '';
+    userProfile.style.display = 'none';
+    showPlayerToast('Logged out successfully.');
+  });
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!userProfile.contains(e.target)) {
+    logOutContainer.innerHTML = '';
+  }
+});
   }
 
+ /* function listmovie(){
+    const filter = [...appData];
+    const listmov = document.createElement('div');
+
+
+     listmov.innerHTML = filter.filter(item=>{
+
+     `
+    <ul>
+      <li>{item.title}</li>
+      </button>
+    </ul>
+  `;
+     })
+
+  }*/
+
+ 
+function showSearchDropdown(query){
+  //remove existing dropdown
+  hideSearchDropdown()
+
+  // Filter results
+  const results = appData.filter(item =>
+    item.title?.toLowerCase().includes(query) ||
+    item.genres?.some(g => g.toLowerCase().includes(query)) ||
+    item.actors?.toLowerCase().includes(query) ||
+    item.studio?.toLowerCase().includes(query)
+  ).slice(0, 6); // max 6 results
+
+  if (results.length === 0) return;
+
+  // Build dropdown
+  const dropdown = document.createElement('div');
+  dropdown.id = 'search-dropdown';
+  dropdown.innerHTML = results.map(item => `
+    <div class="search-result-item" data-id="${item.id}">
+      <img src="${item.poster || item.youtube_thumbnail || ''}" 
+           class="search-result-poster" 
+           onerror="this.style.display='none'"/>
+      <div class="search-result-info">
+        <span class="search-result-title">${item.title}</span>
+        <span class="search-result-meta">${item.type} • ${item.duration || 'trailer'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Click to select
+  dropdown.querySelectorAll('.search-result-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const selected = appData.find(i => i.id === el.dataset.id);
+      if (selected) {
+        selectItem(selected);
+        searchInput.value = '';
+        currentFilters.search = '';
+        searchClearBtn.style.display = 'none';
+        hideSearchDropdown();
+      }
+    });
+  });
+
+  // Position it under the search bar
+  const wrapper = searchInput.parentElement;
+  wrapper.style.position = 'relative';
+  wrapper.appendChild(dropdown);
+}
+
+
+
+
+
+function hideSearchDropdown() {
+  const existing = document.getElementById('search-dropdown');
+  if (existing) existing.remove();
+}
   
 
-  //Icon logout
-  function logout(){
-  icons.addEventListener('click', (e)=>{
-    e.preventDefault();
-    const smallCard = document.querySelector('.log-out');
-
-    if (smallCard) {
-      smallCard.remove();
-      return;
-    }
-      smallCard = document.createElement('div');
-      smallCard.className = 'log-outy';
-      smallCard.style.cssText = `
-        position: absolute;
-        width:100px;
-        height: 200px;
-        top: 20px;
-        right: 20px;
-        background-color: white;
-        color: #171717;
-        z-index: 1000;
-        border: 1px solid rgba(255,255,255,0.08);
-        
-        animation: fadeIn 0.2s ease-out;
-      `;
-    
-   logOut.appendChild(smallCard)
-
-  })
-}
-logout()
+  
   
 
   
@@ -635,15 +765,20 @@ logout()
     let filtered = [...appData];
 
     // Search filters
-    if (currentFilters.search) {
+   /* if (currentFilters.search) {
       const q = currentFilters.search;
+   
       filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(q) ||
         item.genres.some(g => g.toLowerCase().includes(q)) ||
         item.actors.toLowerCase().includes(q) ||
         item.studio.toLowerCase().includes(q)
+        
+
+        
+       
       );
-    }
+    }*/
     // Genre filter
     if (currentFilters.genre) {
       filtered = filtered.filter(item =>

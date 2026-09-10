@@ -32,10 +32,7 @@
       </div>
     </div>
     <div class="header-right">
-       <button id="login-btn" class="login-btn-link" title="Create Account">
-        <i class="fa-solid fa-user-plus"></i>
-        <span>LoggedIn</span>
-      </button>
+      
       <button id="signup-btn" class="signup-btn-link" title="Create Account">
         <i class="fa-solid fa-user-plus"></i>
         <span>Sign Up</span>
@@ -44,17 +41,19 @@
         <i class="fa-solid fa-cloud-arrow-up"></i>
         <span>Upload</span>
       </a>
-      <div class="user-profile" >
+
+      <!-- 2. Hide user-profile avatar by default, show only when logged in -->
+<div class="user-profile" style="display: none;">
         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" alt="User Avatar" class="avatar">
       </div>
     </div>
 
-    <!--log out-->
-    <div class="log-out">
-
-    </div>
+   
     <!---end-->
   </header>
+   <!--log out-->
+   <!-- 1. log-out needs an id -->
+<div class="log-out" id="log-out"></div>
 
   <!-- Navigation Drawer (Hamburger Panel) -->
   <div id="drawer-overlay" class="drawer-overlay"></div>
