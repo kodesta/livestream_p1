@@ -233,5 +233,55 @@
         ]
       }
     ]
+  },
+  {
+    "id": "db-1",
+    "title": "gohst",
+    "type": "Movie",
+    "description": "a short video i created",
+    "rating": 4,
+    "worldRank": "#9 Globally",
+    "duration": "120 min",
+    "actors": "fogo delp",
+    "studio": "yelocard",
+    "country": "United States",
+    "genres": [
+      "sci-fi"
+    ],
+    "poster": "/uploads/posterFile-1789580737670-790675165.png",
+    "videoUrl": "/uploads/videoFile-1789580738334-930421479.mp4",
+    "reactions": {
+      "love": 0,
+      "like": 0,
+      "funny": 0,
+      "wow": 0,
+      "sad": 0
+    },
+    "releaseDate": "2026-09-17"
+  },
+  {
+    "id": "db-3",
+    "title": "trollo",
+    "type": "Movie",
+    "description": "someting in region",
+    "rating": 4,
+    "worldRank": "#12 Globally",
+    "duration": "120 min",
+    "actors": "goroo",
+    "studio": "yelocard",
+    "country": "United States",
+    "genres": [
+      "sci-fi"
+    ],
+    "poster": "/uploads/posterFile-1789637750456-910440067.png",
+    "videoUrl": "/uploads/videoFile-1789637751297-207430493.mp4",
+    "reactions": {
+      "love": 0,
+      "like": 0,
+      "funny": 0,
+      "wow": 0,
+      "sad": 0
+    },
+    "releaseDate": "2026-09-16"
   }
 ]

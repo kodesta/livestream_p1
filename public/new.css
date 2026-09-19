@@ -228,6 +228,30 @@ iframe {
         color: black;
     }
 
+    .movie-grid{
+      width: 30px;
+      height: 30px;
+      background-color: grey;
+    }
+
+    /*.grid-block{
+
+      width: 1200px;
+      
+      margin: 0px 200px;
+      padding: 30PX 160px;
+      padding-bottom: 74px;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-glow);
+      position:absolute;
+      z-index: 100;
+      scrollbar-width: auto;
+      color: #34d399;
+
+    }*/
+
 
 
 

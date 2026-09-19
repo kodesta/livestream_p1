@@ -22,6 +22,78 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/auth', authRoutes)
 
+//
+app.get('/api/search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.json([]);
+
+  const query = q.toLowerCase();
+
+  try {
+    // Try DB first
+    const dbResults = await prisma.titles.findMany({
+      where: {
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { actors: { contains: q, mode: 'insensitive' } },
+          { studio: { contains: q, mode: 'insensitive' } },
+        ]
+      },
+      take: 6
+    });
+
+    if (dbResults.length > 0) {
+      return res.json(dbResults.map(item => ({
+        id: 'db-' + item.title_id,
+        title: item.title,
+        type: item.type_title,
+        rating: item.rating,
+        duration: item.duration,
+        poster: item.poster_url,
+        studio: item.studio,
+        country: item.country,
+        genres: [],
+        source: 'db'
+      })));
+    }
+
+    // Fallback to JSON
+    const jsonData = readDatabase();
+    const jsonResults = jsonData.filter(item =>
+      item.title?.toLowerCase().includes(query) ||
+      item.genres?.some(g => g.toLowerCase().includes(query)) ||
+      item.actors?.toLowerCase().includes(query) ||
+      item.studio?.toLowerCase().includes(query)
+    ).slice(0, 6);
+
+    return res.json(jsonResults.map(item => ({ ...item, source: 'json' })));
+
+  } catch (err) {
+    console.error('Search error:', err);
+
+    // DB failed — fallback to JSON
+    const jsonData = readDatabase();
+    const jsonResults = jsonData.filter(item =>
+      item.title?.toLowerCase().includes(query) ||
+      item.genres?.some(g => g.toLowerCase().includes(query)) ||
+      item.actors?.toLowerCase().includes(query) ||
+      item.studio?.toLowerCase().includes(query)
+    ).slice(0, 6);
+
+    return res.json(jsonResults.map(item => ({ ...item, source: 'json' })));
+  }
+});
+
+// Protect admin page
+app.get('/admin.html', (req, res, next) => {
+  // For now just serve it — real protection comes via JWT later
+  // Frontend handles the redirect via localStorage check
+  next();
+});
+
+
+//--------//
+
 
 
 // Ensure directories exist
@@ -191,10 +263,73 @@ const upload = multer({
 });
 // API Routes
 // Get catalog
-app.get('/api/movies', (req, res) => {
+
+/*app.get('/api/movies', (req, res) => {
   const db = readDatabase();
   res.json(db);
+});*/
+
+app.get('/api/movies', async (req, res) => {
+  try {
+    const dbTitles = await prisma.titles.findMany({
+      include: {
+        title_genres: {
+          include: { genres: true }
+        },
+        seasons: {
+          include: { episodes: true }
+        }
+      },
+      orderBy: { created_at: 'desc' }
+    });
+
+    if (dbTitles.length > 0) {
+      const formatted = dbTitles.map(item => ({
+  id: 'db-' + item.title_id,
+  title: item.title,
+  type: item.type_title,
+  description: item.description,
+  rating: parseFloat(item.rating) || 4.0,
+  worldRank: item.world_rank,
+  duration: item.duration,
+  actors: item.actors,
+  studio: item.studio,
+  country: item.country,
+  genres: item.title_genres.map(tg => tg.genres.genre_name),
+  poster: item.poster_url,
+  videoUrl: item.video_url || null,  // ← ADD THIS
+  reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
+  releaseDate: item.release_date
+    ? item.release_date.toISOString().split('T')[0]
+    : null,
+  seasons: item.seasons.map(s => ({
+    seasonNumber: s.season_number,
+    episodes: s.episodes.map(e => ({
+      episodeNumber: e.episode_number,
+      title: e.title,
+      duration: e.duration,
+      description: e.description,
+      videoUrl: e.video_url
+    }))
+  }))
+}));
+
+      return res.json(formatted);
+    }
+
+    // Fallback to JSON
+    const jsonData = readDatabase();
+    return res.json(jsonData);
+
+  } catch (err) {
+    console.error('GET /api/movies error:', err);
+    // Fallback to JSON on DB error
+    const jsonData = readDatabase();
+    return res.json(jsonData);
+  }
 });
+
+
 // Fetch trending trailers from KinoCheck (no API key needed under 1000 req/day):
 app.get('/api/trending', async(req,res)=>{
   try{
@@ -265,7 +400,139 @@ app.post('/api/movies/:id/react', (req, res) => {
 });
 
 // Upload a new movie or TV show
+
 app.post('/api/movies', upload.fields([
+  { name: 'posterFile', maxCount: 1 },
+  { name: 'videoFile', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const {
+      title,
+      type,
+      description,
+      rating,
+      actors,
+      studio,
+      country,
+      genres,
+      videoUrl,
+      posterUrl,
+      releaseDate
+    } = req.body;
+
+    if (!title || !type) {
+      return res.status(400).json({ error: "Title and Type are required." });
+    }
+
+    // Handle poster
+    let poster = posterUrl || '';
+    if (req.files?.posterFile?.[0]) {
+      poster = '/uploads/' + req.files.posterFile[0].filename;
+    }
+
+    // Handle video
+    let finalVideoUrl = videoUrl || '';
+    if (req.files?.videoFile?.[0]) {
+      finalVideoUrl = '/uploads/' + req.files.videoFile[0].filename;
+    }
+
+    // Parse genres array
+    const genresArray = Array.isArray(genres)
+      ? genres
+      : (genres ? genres.split(',').map(g => g.trim()) : []);
+
+    // --- Save to Postgres ---
+    const newTitle = await prisma.titles.create({
+      data: {
+        title,
+        type_title: type,
+        description: description || 'No description provided.',
+        rating: parseFloat(rating) || 4.0,
+        world_rank: '#' + Math.floor(Math.random() * 50 + 1) + ' Globally',
+        duration: type === 'TV Show' ? '1 Season' : '120 min',
+        actors: actors || 'Unknown',
+        studio: studio || 'Independent Studio',
+        country: country || 'United States',
+        poster_url: poster || null,
+        video_url: type === 'Movie' ? finalVideoUrl || null : null,  // ← ADD THIS
+        release_date: releaseDate ? new Date(releaseDate) : new Date(),
+      }
+    });
+
+    // Save genres
+    if (genresArray.length > 0) {
+      for (const genreName of genresArray) {
+        // Upsert genre
+        const genre = await prisma.genres.upsert({
+          where: { genre_name: genreName },
+          update: {},
+          create: { genre_name: genreName }
+        });
+
+        // Link genre to title
+        await prisma.title_genres.create({
+          data: {
+            title_id: newTitle.title_id,
+            genre_id: genre.genre_id
+          }
+        });
+      }
+    }
+
+    // If TV Show — create Season 1 Episode 1
+    if (type === 'TV Show') {
+      const season = await prisma.seasons.create({
+        data: {
+          title_id: newTitle.title_id,
+          season_number: 1
+        }
+      });
+
+      await prisma.episodes.create({
+        data: {
+          season_id: season.season_id,
+          episode_number: 1,
+          title: 'Episode 1: Pilot',
+          duration: '45 min',
+          description: `The pilot episode of ${title}.`,
+          video_url: finalVideoUrl || null
+        }
+      });
+    }
+
+    // Also save to JSON as backup
+    const db = readDatabase();
+    const newItem = {
+      id: 'db-' + newTitle.title_id,
+      title,
+      type,
+      description: description || 'No description provided.',
+      rating: parseFloat(rating) || 4.0,
+      worldRank: newTitle.world_rank,
+      duration: newTitle.duration,
+      actors: actors || 'Unknown',
+      studio: studio || 'Independent Studio',
+      country: country || 'United States',
+      genres: genresArray,
+      poster: poster || '',
+      videoUrl: type === 'Movie' ? finalVideoUrl : null,
+      reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
+      releaseDate: releaseDate || new Date().toISOString().split('T')[0]
+    };
+    db.push(newItem);
+    writeDatabase(db);
+
+    return res.status(201).json({ success: true, item: newItem });
+
+  } catch (err) {
+    console.error("Error in POST /api/movies:", err);
+    return res.status(500).json({ error: "Failed to upload. " + err.message });
+  }
+});
+
+
+
+/*app.post('/api/movies', upload.fields([
   { name: 'posterFile', maxCount: 1 },
   { name: 'videoFile', maxCount: 1 }
 ]), (req, res) => {
@@ -342,7 +609,7 @@ app.post('/api/movies', upload.fields([
     console.error("Error in POST /api/movies:", err);
     res.status(500).json({ error: "Failed to upload movie/TV show. " + err.message });
   }
-});
+});*/
 // Start server
 
 app.listen(PORT, () => {

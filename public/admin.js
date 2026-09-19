@@ -26,6 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let activePosterSource = 'url'; // 'url' or 'file'
   let activeVideoSource = 'url';  // 'url' or 'file'
 
+  // Check if user is logged in
+const user = localStorage.getItem('livestream_user');
+if (!user) {
+  alert('You must be signed up and logged in to upload content.');
+  window.location.href = '/';
+}
+
   // --- POSTER TAB SWITCHES ---
   posterTabUrl.addEventListener('click', () => {
     posterTabUrl.classList.add('active');

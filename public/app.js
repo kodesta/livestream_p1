@@ -94,6 +94,7 @@ const sidebarRight = document.getElementById('sidebar-right');
   const modalTitle = document.getElementById('modal-title');
   const modalGrid = document.getElementById('modal-grid');
   const backToFavsBtn = document.getElementById('back-to-favs-btn');
+  const movieGrid =  document.getElementById('movie-grid');
   // Sign Up Modal Elements
   const signupBtn = document.getElementById('signup-btn');
   const signupModal = document.getElementById('signup-modal');
@@ -113,7 +114,15 @@ const sidebarRight = document.getElementById('sidebar-right');
     fetchCatalog();
     setupEventListeners();
     renderFavorites();
+    checkSession(); // ← add this
   }
+
+  function checkSession() {
+  const user = localStorage.getItem('livestream_user');
+  if (user) {
+    loggedIn(JSON.parse(user));
+  }
+}
 
   // --- API CALLS ---
   /*function fetchCatalog() {
@@ -175,7 +184,6 @@ const sidebarRight = document.getElementById('sidebar-right');
         e.preventDefault();
         const filterVal = item.getAttribute('data-filter');
         if (filterVal === 'all') {
-          // Home button resets filters and shows all in left catalog
           currentFilters.category = 'all';
           currentFilters.genre = '';
           currentFilters.country = '';
@@ -183,7 +191,6 @@ const sidebarRight = document.getElementById('sidebar-right');
           renderCatalog();
           toggleDrawer();
         } else {
-          // Opens beautiful tiled grid modal
           const parts = filterVal.split('-');
           const type = parts[0] === 'movies' ? 'Movies' : 'TV Shows';
           const detail = parts[1] === 'recent' ? 'Recent' : parts[1] === 'old' ? 'Classic' : 'All';
@@ -212,69 +219,52 @@ const sidebarRight = document.getElementById('sidebar-right');
 
     // Search input
     searchInput.addEventListener('input', () => {
-      
-       const query = searchInput.value.trim().toLowerCase();
-        currentFilters.search = query;
-
+      const query = searchInput.value.trim().toLowerCase();
+      currentFilters.search = query;
       if (query.length > 0) {
-
-       
         searchClearBtn.style.display = 'block';
         showSearchDropdown(query);
       } else {
         searchClearBtn.style.display = 'none';
         hideSearchDropdown();
       }
-     // renderCatalog();
-     
     });
 
-    //**key support
-    searchInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const query = searchInput.value.trim().toLowerCase();
-    if (!query) return;
-
-    const result = appData.find(item =>
-      item.title?.toLowerCase().includes(query) ||
-      item.genres?.some(g => g.toLowerCase().includes(query)) ||
-      item.actors?.toLowerCase().includes(query) ||
-      item.studio?.toLowerCase().includes(query)
-    );
-
-    if (result) {
-      selectItem(result);
-      searchInput.value = '';
-      currentFilters.search = '';
-      searchClearBtn.style.display = 'none';
-      hideSearchDropdown();
-    }
-  }
-
-  // Arrow key navigation in dropdown
-  if (e.key === 'ArrowDown') {
-    const first = document.querySelector('.search-result-item');
-    if (first) first.focus();
-  }
-});
+    // Enter key support
+    searchInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+          const results = await res.json();
+          if (results.length > 0) {
+            selectItem(results[0]);
+            searchInput.value = '';
+            currentFilters.search = '';
+            searchClearBtn.style.display = 'none';
+            hideSearchDropdown();
+          }
+        } catch (err) {
+          console.error('Search enter error:', err);
+        }
+      }
+    });
 
     searchClearBtn.addEventListener('click', () => {
       searchInput.value = '';
       currentFilters.search = '';
       searchClearBtn.style.display = 'none';
-      //renderCatalog();
       hideSearchDropdown();
     });
 
-
-    document.addEventListener('click', (e)=>{
-      if(!searchInput.contains(e.target)){
-        hideSearchDropdown()
-
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target)) {
+        hideSearchDropdown();
       }
-    })
+    });
 
-    // Left Sidebar Resize Splitter
+    // Left Sidebar Resize
     let isResizing = false;
     resizeHandle.addEventListener('mousedown', (e) => {
       isResizing = true;
@@ -286,7 +276,6 @@ const sidebarRight = document.getElementById('sidebar-right');
       if (!isResizing) return;
       let newWidth = e.clientX;
       if (newWidth < 120) {
-        // Compact icon mode
         sidebarLeft.classList.add('compact');
       } else {
         sidebarLeft.classList.remove('compact');
@@ -304,22 +293,57 @@ const sidebarRight = document.getElementById('sidebar-right');
       }
     });
 
-    /***/
-      // right Sidebar Resize Splitter
+    //left siderbar to modal
+   
+    movieGrid.addEventListener('click', () => {
+  openBrowseModal('all', null, 'Full Catalog');
+});
+
+    /*movieGrid.addEventListener('click', ()=>{
+      movieGrid.innerHTML = `<div class="grid-block" >
+        <span class="close-grid" id="close-grid" style="font-size: 40px; color: black">x</span>
+        
+         <!-- Movie/Show Catalog Cards -->
+      <div class="catalog-list" id="catalog-list">
+        <!-- Rendered dynamically by app.js -->
+        
+        ${catalogList ? catalogList :<div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>}
+      </div>
+      </div>`;
+      
+
+  const closeGrids= document.getElementById('close-grid');
+  const gridBlock= document.querySelector('.grid-block');
+  
+  
+  closeGrids.addEventListener('click', (e)=>{
+    e.stopPropagation()
+    gridBlock.style.display = 'none';
+
+
+  })
+     
+
+    })*/
+
+  
+
+  
+
+
+
+    // Right Sidebar Resize
     let rightResizing = false;
     resizeRight.addEventListener('mousedown', (e) => {
-      console.log('mousedown fired on right handle');
       rightResizing = true;
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
       resizeRight.classList.add('active');
     });
     document.addEventListener('mousemove', (e) => {
-      console.log('dragging, newWidth =', window.innerWidth - e.clientX);
       if (!rightResizing) return;
       let newWidth = window.innerWidth - e.clientX;
       if (newWidth < 120) {
-        // Compact icon mode
         sidebarRight.classList.add('compact');
       } else {
         sidebarRight.classList.remove('compact');
@@ -336,13 +360,11 @@ const sidebarRight = document.getElementById('sidebar-right');
         resizeRight.classList.remove('active');
       }
     });
-     /***** */
 
-    // Custom Video Player Controls
+    // Video Player Controls
     playPauseBtn.addEventListener('click', togglePlay);
     bigPlayBtn.addEventListener('click', togglePlay);
     videoPlayer.addEventListener('click', togglePlay);
-
     videoPlayer.addEventListener('play', () => {
       playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
       bigPlayBtn.classList.add('hidden');
@@ -362,7 +384,7 @@ const sidebarRight = document.getElementById('sidebar-right');
       updateVolumeIcon();
     });
 
-    // Scrubber timeline control
+    // Scrubber
     let isScrubbing = false;
     progressContainer.addEventListener('mousedown', (e) => {
       isScrubbing = true;
@@ -378,11 +400,11 @@ const sidebarRight = document.getElementById('sidebar-right');
       isScrubbing = false;
     });
 
-    // Fullscreen & Theater modes
+    // Fullscreen & Theater
     fullscreenBtn.addEventListener('click', toggleFullscreen);
     theaterBtn.addEventListener('click', toggleTheaterMode);
 
-    // Settings gear resolution selectors
+    // Settings
     const settingsBtn = document.getElementById('settings-btn');
     const settingsMenu = document.getElementById('settings-menu');
     const settingsOptions = document.querySelectorAll('.settings-option');
@@ -402,7 +424,7 @@ const sidebarRight = document.getElementById('sidebar-right');
       });
     });
 
-    // Back to Favorites button trigger
+    // Back to Favorites
     backToFavsBtn.addEventListener('click', () => {
       episodesView.style.display = 'none';
       rightSidebarTitle.textContent = "My Favorites";
@@ -415,14 +437,13 @@ const sidebarRight = document.getElementById('sidebar-right');
       btn.addEventListener('click', () => {
         tabButtons.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
-
         btn.classList.add('active');
         const contentId = 'tab-' + btn.getAttribute('data-tab');
         document.getElementById(contentId).classList.add('active');
       });
     });
 
-    // Emojis reaction buttons
+    // Reaction buttons
     reactionButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         if (!activeItem) return;
@@ -439,92 +460,129 @@ const sidebarRight = document.getElementById('sidebar-right');
       }
     });
 
-    //Login modal
-
-    loginLink.addEventListener('click', (e)=>{
+    // Login modal
+    loginLink.addEventListener('click', (e) => {
       e.preventDefault();
       signupModal.style.display = 'none';
       loginModal.style.display = 'block';
-
-    })
-
-    //close login
-    loginCloseBtn.addEventListener('click', ()=>{
+    });
+    loginCloseBtn.addEventListener('click', () => {
       loginModal.style.display = 'none';
-    })
-
-    //close login via overlay
-    loginOverlay.addEventListener('click', ()=>{
+    });
+    loginOverlay.addEventListener('click', () => {
       loginModal.style.display = 'none';
-    })
+    });
 
-    // Sign Up Modal
+    // Signup modal
     signupBtn.addEventListener('click', () => {
       signupModal.style.display = 'flex';
     });
     signupCloseBtn.addEventListener('click', closeSignupModal);
     signupOverlay.addEventListener('click', closeSignupModal);
-    signupForm.addEventListener('submit', (e) => {
+
+    signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      // NOTE: no auth backend yet - this just confirms the form works.
-      // Wire this up to a real /api/signup endpoint once accounts are built.
       const name = document.getElementById('signup-name').value;
-      showPlayerToast(`Welcome, ${name}! (Accounts coming soon)`);
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
 
-      loggedIn();
+      if (!email || !password) {
+        showPlayerToast('Email and password are required.');
+        return;
+      }
+      if (password.length < 8) {
+        showPlayerToast('Password must be at least 8 characters.');
+        return;
+      }
 
-      signupForm.reset();
-      
-      closeSignupModal();
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, display_name: name })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showPlayerToast(data.error || 'Signup failed.');
+          return;
+        }
+        localStorage.setItem('livestream_user', JSON.stringify(data.user));
+        showPlayerToast(`Welcome, ${name || data.user.email}!`);
+        loggedIn(data.user);
+        signupForm.reset();
+        closeSignupModal();
+      } catch (err) {
+        console.error('Signup error:', err);
+        showPlayerToast('Network error. Please try again.');
+      }
     });
 
-    //Icon logout
- // Logged in confirmation
-function loggedIn() {
+    // Protect upload page
+    const adminLink = document.querySelector('.admin-btn-link');
+    if (adminLink) {
+      adminLink.addEventListener('click', (e) => {
+        const user = localStorage.getItem('livestream_user');
+        if (!user) {
+          e.preventDefault();
+          signupModal.style.display = 'flex';
+          showPlayerToast('Please sign up or log in to upload content.');
+        }
+      });
+    }
+
+    // Logout dropdown
+    const userProfile = document.querySelector('.user-profile');
+    const logOutContainer = document.getElementById('log-out');
+
+    userProfile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (logOutContainer.innerHTML) {
+        logOutContainer.innerHTML = '';
+        return;
+      }
+      logOutContainer.innerHTML = `
+        <div class="logout-card">
+          <p class="logout-username">My Account</p>
+          <button id="logout-btn" class="logout-btn">
+            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+          </button>
+        </div>
+      `;
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        signupBtn.style.display = 'block';
+        logOutContainer.innerHTML = '';
+        userProfile.style.display = 'none';
+        localStorage.removeItem('livestream_user');
+        showPlayerToast('Logged out successfully.');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!userProfile.contains(e.target)) {
+        logOutContainer.innerHTML = '';
+      }
+    });
+
+  } // ← closes setupEventListeners()
+
+  // Logged in confirmation
+  function loggedIn(user) {
+  signupBtn.style.display = 'none';
+  const userProfile = document.querySelector('.user-profile');
+  userProfile.style.display = 'flex';
+
+  // Store user session
+  if (user) {
+    localStorage.setItem('livestream_user', JSON.stringify(user));
+  }
+}
+/*function loggedIn() {
   signupBtn.style.display = 'none';
   //loginBtn.style.display = 'block';
   document.querySelector('.user-profile').style.display = 'flex';
-}
+}*/
 
-// Logout dropdown
-const userProfile = document.querySelector('.user-profile');
-const logOutContainer = document.getElementById('log-out');
-
-userProfile.addEventListener('click', (e) => {
-  e.preventDefault();
-  
-  // Toggle dropdown
-  if (logOutContainer.innerHTML) {
-    logOutContainer.innerHTML = '';
-    return;
-  }
-
-  logOutContainer.innerHTML = `
-    <div class="logout-card">
-      <p class="logout-username">My Account</p>
-      <button id="logout-btn" class="logout-btn">
-        <i class="fa-solid fa-right-from-bracket"></i> Log Out
-      </button>
-    </div>
-  `;
-
-  // Handle logout click
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    signupBtn.style.display = 'block';
-    //loginBtn.style.display = 'none';
-    logOutContainer.innerHTML = '';
-    userProfile.style.display = 'none';
-    showPlayerToast('Logged out successfully.');
-  });
-});
-
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  if (!userProfile.contains(e.target)) {
-    logOutContainer.innerHTML = '';
-  }
-});
-  }
+ 
 
  /* function listmovie(){
     const filter = [...appData];
@@ -542,55 +600,119 @@ document.addEventListener('click', (e) => {
      })
 
   }*/
+ function checkSession() {
+    const user = localStorage.getItem('livestream_user');
+    if (user) {
+      loggedIn(JSON.parse(user));
+    }
+  }
 
+  function closeSignupModal() {
+    signupModal.style.display = 'none';
+  }
+
+  function hideSearchDropdown() {
+    const existing = document.getElementById('search-dropdown');
+    if (existing) existing.remove();
+  }
  
-function showSearchDropdown(query){
+async function showSearchDropdown(query){
   //remove existing dropdown
   hideSearchDropdown()
 
+  //new adds
+  if (!query) return;
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const backendResults = await res.json();
+
+     // 2. Also search KinoCheck trailers already in appData
+    const q = query.toLowerCase();
+    const kinoResults = appData.filter(item =>
+      item.id?.startsWith('kc-') && (
+        item.title?.toLowerCase().includes(q) ||
+        item.genres?.some(g => g.toLowerCase().includes(q))
+      )
+    ).slice(0, 3);
+
+    // 3. Merge — backend first, then kino, deduplicate by title
+    const seen = new Set();
+    const results = [...backendResults, ...kinoResults].filter(item => {
+      if (seen.has(item.title)) return false;
+      seen.add(item.title);
+      return true;
+    }).slice(0, 6);
+
+    if (results.length === 0) return;
+
   // Filter results
+  /*
   const results = appData.filter(item =>
     item.title?.toLowerCase().includes(query) ||
     item.genres?.some(g => g.toLowerCase().includes(query)) ||
     item.actors?.toLowerCase().includes(query) ||
     item.studio?.toLowerCase().includes(query)
-  ).slice(0, 6); // max 6 results
+  ).slice(0, 6);*/ // max 6 results
 
-  if (results.length === 0) return;
+ 
 
-  // Build dropdown
+//------//
+
   const dropdown = document.createElement('div');
-  dropdown.id = 'search-dropdown';
-  dropdown.innerHTML = results.map(item => `
-    <div class="search-result-item" data-id="${item.id}">
-      <img src="${item.poster || item.youtube_thumbnail || ''}" 
-           class="search-result-poster" 
-           onerror="this.style.display='none'"/>
-      <div class="search-result-info">
-        <span class="search-result-title">${item.title}</span>
-        <span class="search-result-meta">${item.type} • ${item.duration || 'trailer'}</span>
+    dropdown.id = 'search-dropdown';
+
+    dropdown.innerHTML = results.map(item => `
+      <div class="search-result-item" data-id="${item.id}" style="
+        display:flex; align-items:center; gap:12px;
+        padding:10px 14px; cursor:pointer;
+        border-bottom:1px solid rgba(255,255,255,0.04); color:white;
+      ">
+        <img src="${item.poster || ''}" style="width:36px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'"/>
+        <div>
+          <div style="font-size:0.88rem;font-weight:600;">${item.title}</div>
+          <div style="font-size:0.75rem;color:#64748b;">
+            ${item.type || 'Movie'} • ${item.duration || 'trailer'}
+            ${item.id?.startsWith('kc-') ? ' • <span style="color:#6366f1">trailer</span>' : ''}
+          </div>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
 
-  // Click to select
-  dropdown.querySelectorAll('.search-result-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const selected = appData.find(i => i.id === el.dataset.id);
-      if (selected) {
-        selectItem(selected);
-        searchInput.value = '';
-        currentFilters.search = '';
-        searchClearBtn.style.display = 'none';
-        hideSearchDropdown();
-      }
+    dropdown.querySelectorAll('.search-result-item').forEach(el => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        // Check appData first (covers kino results)
+        const selected = appData.find(i => i.id === el.dataset.id)
+          || results.find(i => i.id === el.dataset.id);
+        if (selected) {
+          selectItem(selected);
+          searchInput.value = '';
+          currentFilters.search = '';
+          searchClearBtn.style.display = 'none';
+          hideSearchDropdown();
+        }
+      });
     });
-  });
 
-  // Position it under the search bar
-  const wrapper = searchInput.parentElement;
-  wrapper.style.position = 'relative';
-  wrapper.appendChild(dropdown);
+   const wrapper = searchInput.parentElement;
+    wrapper.style.position = 'relative';
+    wrapper.appendChild(dropdown);
+
+  } catch (err) {
+    console.error('Search dropdown error:', err);
+
+    // Full fallback — search appData directly
+    const q = query.toLowerCase();
+    const fallback = appData.filter(item =>
+      item.title?.toLowerCase().includes(q) ||
+      item.genres?.some(g => g.toLowerCase().includes(q)) ||
+      item.actors?.toLowerCase().includes(q) ||
+      item.studio?.toLowerCase().includes(q)
+    ).slice(0, 6);
+
+    console.log('Fallback results:', fallback.length);
+  }
 }
 
 
@@ -825,7 +947,7 @@ function hideSearchDropdown() {
       card.innerHTML = `
          
         <div class="card-poster-wrapper ${posterShape}">
-         <a href="/"><span class="add-to-fav">+</span></a>
+          <span  class="add-to-fav">+</span>
           <img class="card-poster" src="${item.poster}" alt="${item.title}">
         </div>
         <div class="card-info">
@@ -857,6 +979,7 @@ function hideSearchDropdown() {
         //** */ Add-to-favorites button handler (per card, with correct item in scope)
       const addTofav = card.querySelector('.add-to-fav');
       addTofav.addEventListener('click', (e)=>{
+        e.preventDefault();
         e.stopPropagation();
         
         
@@ -945,7 +1068,7 @@ function hideSearchDropdown() {
     episodesView.style.display = 'none';
     renderFavorites();
 
-    if (item.type === 'Movie') {
+   /* changes */ if (item.type === 'Movie') {
       loadVideo(item.videoUrl, item.title);
     } else {
       // For TV show, load default S1E1 video stream
@@ -1215,6 +1338,7 @@ function hideSearchDropdown() {
         score: score
       });
       saveFavorites();
+      renderFavorites(); // ← add this: redraw the list immediately after saving
     }
   }
   function updateFavoriteScore(updatedItem) {

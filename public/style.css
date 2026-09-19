@@ -518,31 +518,36 @@ a {
 .add-to-fav {
   width: 22px;
   height: 22px;
-  border-radius: 100%;
+  border-radius: 50%;
   background: rgb(99, 241, 99);
   border: 2px solid rgb(35, 245, 109);
   color: var(--text-main);
   font-size: 1.2rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  text-align: center;
+  display: none;
   position: absolute;
   z-index: 3;
   margin-top: 10px;
   margin-left: 10px;
-  text-align: center;
-  transition: 1s ease;
-  padding-top:0px;
-  display: none;
- 
+  transition: 0.2s ease;
 }
-.add-to-fav:hover{
-  background: rgb(227, 114, 16);
-  border: 2px solid rgb(227, 152, 24);
 
+.catalog-card:hover .add-to-fav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.add-to-fav span,
+.add-to-fav::before {
+  transform: translateY(-1px); /* nudge the glyph up slightly */
+}
+
+
+
+
+
 
 
 /* Resizer splitter */
@@ -1740,8 +1745,8 @@ a {
 
 .modal-container {
   position: relative;
-  width: 90%;
-  max-width: 900px;
+  width: 100%;
+  max-width: 1200px;
   max-height: 80vh;
   background: var(--bg-secondary);
   border: 1px solid var(--glass-border);

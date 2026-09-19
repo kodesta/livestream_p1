@@ -28,7 +28,7 @@ router.post('/signup', async(req,res)=>{
         const existing = await prisma.users.findUnique({ where : {email}});
 
         if(existing){
-            return res.status(409).json({error: 'Eamil taken'})
+            return res.status(409).json({error: 'Email taken'})
 
         }
 

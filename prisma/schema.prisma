@@ -73,6 +73,7 @@ model titles {
   studio       String?        @db.VarChar(255)
   country      String?        @db.VarChar(55)
   poster_url   String?        @db.VarChar(500)
+  video_url    String?        @db.VarChar(500)  // ← ADD THIS
   release_date DateTime?      @db.Date
   created_at   DateTime?      @default(now()) @db.Timestamp(6)
   favorites    favorites[]
