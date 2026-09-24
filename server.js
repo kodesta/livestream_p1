@@ -4,12 +4,8 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { PrismaClient } = require('./generated/prisma');
-const { PrismaPg } = require('@prisma/adapter-pg');
+const prisma = require('./lib/db');
 const authRoutes = require('./routes/auth.cjs');
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +26,6 @@ app.get('/api/search', async (req, res) => {
   const query = q.toLowerCase();
 
   try {
-    // Try DB first
     const dbResults = await prisma.titles.findMany({
       where: {
         OR: [
@@ -39,39 +34,78 @@ app.get('/api/search', async (req, res) => {
           { studio: { contains: q, mode: 'insensitive' } },
         ]
       },
+      include: {
+        title_genres: {
+          include: { genres: true }
+        },
+        seasons: {
+          include: { episodes: true }
+        },
+        reactions: true
+      },
       take: 6
     });
 
-    if (dbResults.length > 0) {
-      return res.json(dbResults.map(item => ({
+    const formattedDb = dbResults.map(item => {
+      const counts = { love: 0, like: 0, funny: 0, wow: 0, sad: 0 };
+      if (item.reactions && item.reactions.length > 0) {
+        for (const r of item.reactions) {
+          if (counts[r.type_reaction] !== undefined) counts[r.type_reaction]++;
+        }
+      }
+
+      return {
         id: 'db-' + item.title_id,
         title: item.title,
         type: item.type_title,
-        rating: item.rating,
-        duration: item.duration,
-        poster: item.poster_url,
-        studio: item.studio,
-        country: item.country,
-        genres: [],
+        description: item.description || '',
+        rating: parseFloat(item.rating) || 4.0,
+        worldRank: item.world_rank || '#1 Globally',
+        duration: item.duration || (item.type_title === 'TV Show' ? '1 Season' : '120 min'),
+        actors: item.actors || 'Unknown',
+        studio: item.studio || 'Independent Studio',
+        country: item.country || 'United States',
+        genres: (item.title_genres || []).map(tg => tg.genres.genre_name),
+        poster: item.poster_url || '',
+        videoUrl: item.video_url || null,
+        reactions: counts,
+        releaseDate: item.release_date ? item.release_date.toISOString().split('T')[0] : null,
+        seasons: (item.seasons || []).map(s => ({
+          seasonNumber: s.season_number,
+          episodes: (s.episodes || []).map(e => ({
+            episodeNumber: e.episode_number,
+            title: e.title,
+            duration: e.duration,
+            description: e.description,
+            videoUrl: e.video_url
+          }))
+        })),
         source: 'db'
-      })));
-    }
+      };
+    });
 
-    // Fallback to JSON
     const jsonData = readDatabase();
     const jsonResults = jsonData.filter(item =>
       item.title?.toLowerCase().includes(query) ||
       item.genres?.some(g => g.toLowerCase().includes(query)) ||
       item.actors?.toLowerCase().includes(query) ||
       item.studio?.toLowerCase().includes(query)
-    ).slice(0, 6);
+    );
 
-    return res.json(jsonResults.map(item => ({ ...item, source: 'json' })));
+    const seen = new Set(formattedDb.map(i => i.title.toLowerCase()));
+    const combined = [...formattedDb];
+    for (const j of jsonResults) {
+      if (!seen.has(j.title.toLowerCase())) {
+        seen.add(j.title.toLowerCase());
+        combined.push({ ...j, source: 'json' });
+      }
+      if (combined.length >= 6) break;
+    }
+
+    return res.json(combined);
 
   } catch (err) {
     console.error('Search error:', err);
-
-    // DB failed — fallback to JSON
     const jsonData = readDatabase();
     const jsonResults = jsonData.filter(item =>
       item.title?.toLowerCase().includes(query) ||
@@ -278,48 +312,57 @@ app.get('/api/movies', async (req, res) => {
         },
         seasons: {
           include: { episodes: true }
-        }
+        },
+        reactions: true
       },
       orderBy: { created_at: 'desc' }
     });
 
-    if (dbTitles.length > 0) {
-      const formatted = dbTitles.map(item => ({
-  id: 'db-' + item.title_id,
-  title: item.title,
-  type: item.type_title,
-  description: item.description,
-  rating: parseFloat(item.rating) || 4.0,
-  worldRank: item.world_rank,
-  duration: item.duration,
-  actors: item.actors,
-  studio: item.studio,
-  country: item.country,
-  genres: item.title_genres.map(tg => tg.genres.genre_name),
-  poster: item.poster_url,
-  videoUrl: item.video_url || null,  // ← ADD THIS
-  reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
-  releaseDate: item.release_date
-    ? item.release_date.toISOString().split('T')[0]
-    : null,
-  seasons: item.seasons.map(s => ({
-    seasonNumber: s.season_number,
-    episodes: s.episodes.map(e => ({
-      episodeNumber: e.episode_number,
-      title: e.title,
-      duration: e.duration,
-      description: e.description,
-      videoUrl: e.video_url
-    }))
-  }))
-}));
+    const formattedDb = dbTitles.map(item => {
+      const counts = { love: 0, like: 0, funny: 0, wow: 0, sad: 0 };
+      if (item.reactions && item.reactions.length > 0) {
+        for (const r of item.reactions) {
+          if (counts[r.type_reaction] !== undefined) counts[r.type_reaction]++;
+        }
+      }
 
-      return res.json(formatted);
-    }
+      return {
+        id: 'db-' + item.title_id,
+        title: item.title,
+        type: item.type_title,
+        description: item.description || '',
+        rating: parseFloat(item.rating) || 4.0,
+        worldRank: item.world_rank || '#1 Globally',
+        duration: item.duration || (item.type_title === 'TV Show' ? '1 Season' : '120 min'),
+        actors: item.actors || 'Unknown',
+        studio: item.studio || 'Independent Studio',
+        country: item.country || 'United States',
+        genres: (item.title_genres || []).map(tg => tg.genres.genre_name),
+        poster: item.poster_url || '',
+        videoUrl: item.video_url || null,
+        reactions: counts,
+        releaseDate: item.release_date
+          ? item.release_date.toISOString().split('T')[0]
+          : null,
+        seasons: (item.seasons || []).map(s => ({
+          seasonNumber: s.season_number,
+          episodes: (s.episodes || []).map(e => ({
+            episodeNumber: e.episode_number,
+            title: e.title,
+            duration: e.duration,
+            description: e.description,
+            videoUrl: e.video_url
+          }))
+        }))
+      };
+    });
 
-    // Fallback to JSON
+    // Merge with default sample catalog from JSON
     const jsonData = readDatabase();
-    return res.json(jsonData);
+    const seen = new Set(formattedDb.map(i => i.title.toLowerCase()));
+    const filteredJson = jsonData.filter(j => !seen.has(j.title.toLowerCase()));
+
+    return res.json([...formattedDb, ...filteredJson]);
 
   } catch (err) {
     console.error('GET /api/movies error:', err);
@@ -333,29 +376,32 @@ app.get('/api/movies', async (req, res) => {
 // Fetch trending trailers from KinoCheck (no API key needed under 1000 req/day):
 app.get('/api/trending', async(req,res)=>{
   try{
-    const response = await fetch('https://api.kinocheck.com/trailers/trending?limit=20');
+    const lang = req.query.language || process.env.KINOCHECK_LANG || 'en';
+    const response = await fetch(`https://api.kinocheck.com/trailers/trending?language=${encodeURIComponent(lang)}&limit=20`);
     const data = await response.json();
 
    //console.log('KEYS:', Object.keys(data));//temp debug
 
-    // Reshape KinoCheck's video objects into your catalog card format
+    // Reshape KinoCheck's video objects into your catalog card format (strictly English)
     const trending = Object.values(data)
-      .filter(video => video.resource) // only keep ones linked to a movie/show
-      .map(video =>({
-        id:'kc-' + video.id,
+      .filter(video => video && video.resource)
+      .filter(video => (!video.language || video.language === lang))
+      .filter(video => !video.title?.includes('German') && !video.title?.includes('Deutsch'))
+      .map(video => ({
+        id: 'kc-' + video.id,
         title: video.title,
-        type: video.resource.type === 'show'? 'TV Show' : 'Movie',
-        description: `Official trailer - ${video.views} On Youtube`,
-        rating:4.0,
+        type: video.resource.type === 'show' ? 'TV Show' : 'Movie',
+        description: `Official trailer - ${video.views ? Number(video.views).toLocaleString() : 0} views on YouTube`,
+        rating: 4.0,
         worldRank: 'trending',
         duration: 'trailer',
-        actors:'N/A',
+        actors: 'N/A',
         studio: 'N/A',
-        country: 'N/A',
-        genres: video.categories || [],
+        country: 'United States',
+        genres: (video.genres && video.genres.length > 0) ? video.genres : (video.categories || ['Trailer']),
         poster: video.youtube_thumbnail,
         videoUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,
-        reactions: {love:0,like:0,funny:0,wow:0,sad:0},
+        reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
         releaseDate: video.published ? video.published.split('T')[0] : '2024-01-01'
       }));
       res.json(trending);
@@ -374,23 +420,110 @@ app.get('/api/trending', async(req,res)=>{
 
 
 // Add reaction to a movie/show
-app.post('/api/movies/:id/react', (req, res) => {
+app.post('/api/movies/:id/react', async (req, res) => {
   const { id } = req.params;
   const { type } = req.body; // e.g., 'love', 'like', 'funny', 'wow', 'sad'
   if (!['love', 'like', 'funny', 'wow', 'sad'].includes(type)) {
     return res.status(400).json({ error: 'Invalid reaction type' });
   }
 
-  const db = readDatabase();
-  const itemIndex = db.findIndex(item => item.id === id);
-  if (itemIndex === -1) {
-    return res.status(404).json({ error: 'Item not found' });
+  // Handle database titles
+  if (id.startsWith('db-')) {
+    const titleId = parseInt(id.replace('db-', ''), 10);
+    try {
+      const titleExists = await prisma.titles.findUnique({
+        where: { title_id: titleId },
+        include: {
+          title_genres: { include: { genres: true } },
+          seasons: { include: { episodes: true } }
+        }
+      });
+
+      if (!titleExists) {
+        return res.status(404).json({ error: 'Item not found' });
+      }
+
+      // Record reaction in Postgres
+      await prisma.reactions.create({
+        data: {
+          title_id: titleId,
+          type_reaction: type
+        }
+      });
+
+      // Recalculate reactions
+      const allReactions = await prisma.reactions.findMany({
+        where: { title_id: titleId }
+      });
+      const counts = { love: 0, like: 0, funny: 0, wow: 0, sad: 0 };
+      allReactions.forEach(r => {
+        if (counts[r.type_reaction] !== undefined) counts[r.type_reaction]++;
+      });
+
+      const total = allReactions.length;
+      const positive = counts.love + counts.like + counts.wow;
+      const newRating = total > 0 ? parseFloat(((positive / total) * 2 + 3).toFixed(1)) : (parseFloat(titleExists.rating) || 4.0);
+
+      await prisma.titles.update({
+        where: { title_id: titleId },
+        data: { rating: newRating }
+      });
+
+      const updated = {
+        id: 'db-' + titleExists.title_id,
+        title: titleExists.title,
+        type: titleExists.type_title,
+        description: titleExists.description,
+        rating: newRating,
+        worldRank: titleExists.world_rank,
+        duration: titleExists.duration,
+        actors: titleExists.actors,
+        studio: titleExists.studio,
+        country: titleExists.country,
+        genres: (titleExists.title_genres || []).map(tg => tg.genres.genre_name),
+        poster: titleExists.poster_url,
+        videoUrl: titleExists.video_url || null,
+        reactions: counts,
+        releaseDate: titleExists.release_date ? titleExists.release_date.toISOString().split('T')[0] : null,
+        seasons: (titleExists.seasons || []).map(s => ({
+          seasonNumber: s.season_number,
+          episodes: (s.episodes || []).map(e => ({
+            episodeNumber: e.episode_number,
+            title: e.title,
+            duration: e.duration,
+            description: e.description,
+            videoUrl: e.video_url
+          }))
+        }))
+      };
+
+      return res.json(updated);
+    } catch (err) {
+      console.error('Error recording DB reaction:', err);
+      return res.status(500).json({ error: 'Failed to record reaction' });
+    }
   }
+
+  // Handle JSON database items & trailers
+  const db = readDatabase();
+  let itemIndex = db.findIndex(item => item.id === id);
+
+  if (itemIndex === -1) {
+    const newItem = {
+      id: id,
+      title: req.body.title || 'Trailer',
+      reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
+      rating: 4.0
+    };
+    db.push(newItem);
+    itemIndex = db.length - 1;
+  }
+
   if (!db[itemIndex].reactions) {
     db[itemIndex].reactions = { love: 0, like: 0, funny: 0, wow: 0, sad: 0 };
   }
   db[itemIndex].reactions[type] = (db[itemIndex].reactions[type] || 0) + 1;
-  // Recalculate rating based on reactions count as a fun dynamic feature
+
   const totalReactions = Object.values(db[itemIndex].reactions).reduce((a, b) => a + b, 0);
   const positive = (db[itemIndex].reactions.love || 0) + (db[itemIndex].reactions.like || 0) + (db[itemIndex].reactions.wow || 0);
   const newRating = totalReactions > 0 ? (positive / totalReactions) * 2 + 3 : db[itemIndex].rating;

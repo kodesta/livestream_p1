@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginLink = document.getElementById('login-link');
   const loginCloseBtn = document.getElementById('loginclose-btn');
   const loginOverlay = document.getElementById('loginoverlay');
+  const loginForm = document.getElementById('login-form');
   // Navigation Drawer Elements
   const drawerOverlay = document.getElementById('drawer-overlay');
   const navDrawer = document.getElementById('nav-drawer');
@@ -146,7 +147,7 @@ const sidebarRight = document.getElementById('sidebar-right');
   function fetchCatalog(){
     Promise.all([
       fetch('/api/movies').then(res=>res.json()),
-      fetch('/api/trending').then(res=>res.json()).catch(()=>[])
+      fetch('/api/trending?language=en').then(res=>res.json()).catch(()=>[])
     ])
     .then(([uploadedMovies, trendingTrailers])=>{
       appData = [...trendingTrailers, ...uploadedMovies];
@@ -443,6 +444,29 @@ const sidebarRight = document.getElementById('sidebar-right');
       });
     });
 
+    // Details Drawer Slide-Up Toggle
+    const detailsSection = document.getElementById('details-section');
+    const detailsToggleBtn = document.getElementById('details-toggle-btn');
+    const detailsCloseBtn = document.getElementById('details-close-btn');
+
+    if (detailsToggleBtn && detailsSection) {
+      detailsToggleBtn.addEventListener('click', () => {
+        const isOpen = detailsSection.classList.toggle('open');
+        detailsToggleBtn.classList.toggle('active', isOpen);
+        detailsToggleBtn.setAttribute('aria-expanded', isOpen);
+      });
+    }
+
+    if (detailsCloseBtn && detailsSection) {
+      detailsCloseBtn.addEventListener('click', () => {
+        detailsSection.classList.remove('open');
+        if (detailsToggleBtn) {
+          detailsToggleBtn.classList.remove('active');
+          detailsToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
     // Reaction buttons
     reactionButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -461,6 +485,11 @@ const sidebarRight = document.getElementById('sidebar-right');
     });
 
     // Login modal
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        loginModal.style.display = 'block';
+      });
+    }
     loginLink.addEventListener('click', (e) => {
       e.preventDefault();
       signupModal.style.display = 'none';
@@ -471,6 +500,54 @@ const sidebarRight = document.getElementById('sidebar-right');
     });
     loginOverlay.addEventListener('click', () => {
       loginModal.style.display = 'none';
+    });
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        if (!email || !password) {
+          showPlayerToast('Email and password are required.');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showPlayerToast(data.error || 'Login failed.');
+            return;
+          }
+          localStorage.setItem('livestream_user', JSON.stringify(data.user));
+          showPlayerToast(`Welcome back, ${data.user.display_name || data.user.email}!`);
+          loggedIn(data.user);
+          loginForm.reset();
+          loginModal.style.display = 'none';
+        } catch (err) {
+          console.error('Login error:', err);
+          showPlayerToast('Network error. Please try again.');
+        }
+      });
+    }
+
+    // Social login buttons feedback
+    document.querySelectorAll('.google-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPlayerToast('Google Sign-In requires OAuth client credentials to be configured in settings.');
+      });
+    });
+    document.querySelectorAll('.facebook-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPlayerToast('Facebook Sign-In requires OAuth client credentials to be configured in settings.');
+      });
     });
 
     // Signup modal
@@ -549,7 +626,8 @@ const sidebarRight = document.getElementById('sidebar-right');
         </div>
       `;
       document.getElementById('logout-btn').addEventListener('click', () => {
-        signupBtn.style.display = 'block';
+        if (loginBtn) loginBtn.style.display = 'inline-flex';
+        signupBtn.style.display = 'inline-flex';
         logOutContainer.innerHTML = '';
         userProfile.style.display = 'none';
         localStorage.removeItem('livestream_user');
@@ -567,20 +645,15 @@ const sidebarRight = document.getElementById('sidebar-right');
 
   // Logged in confirmation
   function loggedIn(user) {
-  signupBtn.style.display = 'none';
-  const userProfile = document.querySelector('.user-profile');
-  userProfile.style.display = 'flex';
+    if (loginBtn) loginBtn.style.display = 'none';
+    signupBtn.style.display = 'none';
+    const userProfile = document.querySelector('.user-profile');
+    userProfile.style.display = 'flex';
 
-  // Store user session
-  if (user) {
-    localStorage.setItem('livestream_user', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('livestream_user', JSON.stringify(user));
+    }
   }
-}
-/*function loggedIn() {
-  signupBtn.style.display = 'none';
-  //loginBtn.style.display = 'block';
-  document.querySelector('.user-profile').style.display = 'flex';
-}*/
 
  
 
@@ -719,23 +792,7 @@ async function showSearchDropdown(query){
 
 
 
-function hideSearchDropdown() {
-  const existing = document.getElementById('search-dropdown');
-  if (existing) existing.remove();
-}
-  
 
-  
-  
-
-  
- 
-
-//---------
-  function closeSignupModal() {
-    signupModal.style.display = 'none';
-    
-  }
 
   // --- SHOW DYNAMIC TOAST ON PLAYER ---
   function showPlayerToast(msg) {
@@ -1083,7 +1140,15 @@ function hideSearchDropdown() {
 
   function populateCast(actorsString) {
     activeCast.innerHTML = '';
-    const actors = actorsString.split(',').map(a => a.trim());
+    if (!actorsString || typeof actorsString !== 'string' || actorsString.trim() === '' || actorsString === 'Unknown' || actorsString === 'N/A') {
+      activeCast.innerHTML = '<p style="color: #64748b; font-size: 0.88rem; padding: 8px;">Cast information not specified.</p>';
+      return;
+    }
+    const actors = actorsString.split(',').map(a => a.trim()).filter(Boolean);
+    if (actors.length === 0) {
+      activeCast.innerHTML = '<p style="color: #64748b; font-size: 0.88rem; padding: 8px;">Cast information not specified.</p>';
+      return;
+    }
     actors.forEach(actor => {
       const initials = actor.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
       const castCard = document.createElement('div');
@@ -1145,35 +1210,43 @@ function hideSearchDropdown() {
   }*/
  
   function loadVideo(url, title){
-    playerTitleDisplay.textContent = title;
+    playerTitleDisplay.textContent = title || 'Video Stream';
     const youtubeplayer = document.getElementById('youtube-player');
-    const isYoutube = url.includes('youtube.com/embed');
+    const isYoutube = typeof url === 'string' && url.includes('youtube.com/embed');
 
-    if(isYoutube){
-      //trailer hand off
-
+    if (isYoutube) {
+      // trailer hand off
       videoPlayer.pause();
       videoPlayer.style.display = 'none';
       playerControls.style.display = 'none';
       bigPlayBtn.style.display = 'none';
       youtubeplayer.src = url + '?rel=0';
       youtubeplayer.style.display = 'block';
-    }else{
-      //normal mode
+    } else if (url) {
+      // normal mode
       youtubeplayer.src = '';
       youtubeplayer.style.display = 'none';
       videoPlayer.style.display = 'block';
-       playerControls.style.display = 'flex';
+      playerControls.style.display = 'flex';
       bigPlayBtn.style.display = 'flex';
       videoPlayer.src = url;
       videoPlayer.load();
+    } else {
+      // no video stream available
+      youtubeplayer.src = '';
+      youtubeplayer.style.display = 'none';
+      videoPlayer.pause();
+      videoPlayer.removeAttribute('src');
+      videoPlayer.load();
+      playerControls.style.display = 'none';
+      bigPlayBtn.style.display = 'none';
+      showPlayerToast('No video stream available for this title.');
     }
 
     progressFill.style.width = '0%';
     progressHandle.style.left = '0%';
     currentTimeDisplay.textContent = '00:00';
     durationTimeDisplay.textContent = '00:00';
-
   }
 
   /**************************8888888888 */
@@ -1259,6 +1332,9 @@ function hideSearchDropdown() {
   }
   function toggleTheaterMode() {
     videoContainer.classList.toggle('theater');
+
+    /**888888888888888888888888888*/
+    document.body.classList.toggle('theater-mode')
   }
 
   function formatTime(seconds) {

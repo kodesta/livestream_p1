@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="new.css">
 </head>
-<body>
+<body class="app-body">
 
   <!-- Top Header Navigation -->
   <header class="app-header">
@@ -32,7 +32,10 @@
       </div>
     </div>
     <div class="header-right">
-      
+      <button id="login-btn" class="signup-btn-link" title="Log In" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); margin-right: 6px;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        <span>Log In</span>
+      </button>
       <button id="signup-btn" class="signup-btn-link" title="Create Account">
         <i class="fa-solid fa-user-plus"></i>
         <span>Sign Up</span>
@@ -217,46 +220,46 @@
         <!-- Big Play Button Overlay -->
         <button class="big-play-btn" id="big-play-btn"><i class="fa-solid fa-play"></i></button>
       </div>
-      <!-- Leaderboard Banner Ad -->
-      <div class="ad-placeholder banner-ad">
-        <span class="ad-badge">Advertisement</span>
-        <span class="ad-text">Ads Here (728x90 Leaderboard Banner)</span>
-      </div>
-
-      <!-- Emoji Interactive Reactions deck -->
+      <!-- Emoji Interactive Reactions deck (Slim Bar) -->
       <section class="reactions-section">
-        <span class="reactions-prompt">How do you react?</span>
-        <div class="reactions-deck">
-          <button class="reaction-btn" data-reaction="love">
-            <span class="reaction-emoji">❤️</span>
-            <span class="reaction-label">Love</span>
-            <span class="reaction-count" id="count-love">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="like">
-            <span class="reaction-emoji">👍</span>
-            <span class="reaction-label">Like</span>
-            <span class="reaction-count" id="count-like">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="funny">
-            <span class="reaction-emoji">😂</span>
-            <span class="reaction-label">Funny</span>
-            <span class="reaction-count" id="count-funny">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="wow">
-            <span class="reaction-emoji">😮</span>
-            <span class="reaction-label">Wow</span>
-            <span class="reaction-count" id="count-wow">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="sad">
-            <span class="reaction-emoji">😢</span>
-            <span class="reaction-label">Sad</span>
-            <span class="reaction-count" id="count-sad">0</span>
-          </button>
+        <div class="reactions-left">
+          <span class="reactions-prompt">How do you react?</span>
+          <div class="reactions-deck">
+            <button class="reaction-btn" data-reaction="love">
+              <span class="reaction-emoji">❤️</span>
+              <span class="reaction-label">Love</span>
+              <span class="reaction-count" id="count-love">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="like">
+              <span class="reaction-emoji">👍</span>
+              <span class="reaction-label">Like</span>
+              <span class="reaction-count" id="count-like">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="funny">
+              <span class="reaction-emoji">😂</span>
+              <span class="reaction-label">Funny</span>
+              <span class="reaction-count" id="count-funny">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="wow">
+              <span class="reaction-emoji">😮</span>
+              <span class="reaction-label">Wow</span>
+              <span class="reaction-count" id="count-wow">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="sad">
+              <span class="reaction-emoji">😢</span>
+              <span class="reaction-label">Sad</span>
+              <span class="reaction-count" id="count-sad">0</span>
+            </button>
+          </div>
         </div>
+        <button id="details-toggle-btn" class="details-toggle-btn" type="button" aria-expanded="false" title="Toggle Title Details">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Details</span>
+        </button>
       </section>
 
-       <!-- Details Section (Tabbed Navigation) -->
-      <section class="details-section">
+       <!-- Details Section (Slide-Up Drawer) -->
+      <section class="details-section" id="details-section">
         <div class="details-header">
           <div class="title-meta">
             <h1 id="active-title">Loading title...</h1>
@@ -267,9 +270,14 @@
               <span class="badge badge-country" id="active-country">USA</span>
             </div>
           </div>
-          <div class="details-studio-info">
-            <span class="studio-label">Production Studio:</span>
-            <span class="studio-value" id="active-studio">Studio Name</span>
+          <div class="details-header-right">
+            <div class="details-studio-info">
+              <span class="studio-label">Production Studio:</span>
+              <span class="studio-value" id="active-studio">Studio Name</span>
+            </div>
+            <button id="details-close-btn" class="details-close-btn" type="button" aria-label="Close Details">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
         </div>
 
@@ -356,6 +364,22 @@
     </aside>
   </div>
 
+  <!-- Shared Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span class="footer-copy">&copy; 2026 Livestream. All rights reserved.</span>
+      </div>
+      <div class="footer-links">
+        <a href="/terms.html" class="footer-link">Terms of Service</a>
+        <span class="footer-separator">•</span>
+        <a href="/privacy.html" class="footer-link">Privacy Policy</a>
+        <span class="footer-separator">•</span>
+        <a href="mailto:contact@livestream.com" class="footer-link"><i class="fa-regular fa-envelope"></i> Contact</a>
+      </div>
+    </div>
+  </footer>
+
   <!-- Detailed Hover Popover element (Global overlay) -->
   <div id="hover-popover" class="hover-popover" style="display: none;">
     <div class="popover-content">
@@ -424,8 +448,8 @@
         </div>
 
         <div class="social-buttons">
-          <button class="social-btn google-btn"><a><i class="fa-brands fa-google"></i></a> Google</button>
-          <button class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
+          <button type="button" class="social-btn google-btn"><i class="fa-brands fa-google"></i> Google</button>
+          <button type="button" class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
         </div>
         
       </div>
@@ -464,15 +488,14 @@
         </div>
 
         <div class="social-buttons">
-          <button class="social-btn google-btn"><i class="fa-brands fa-google"></i> Google</button>
-          <button class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
+          <button type="button" class="social-btn google-btn"><i class="fa-brands fa-google"></i> Google</button>
+          <button type="button" class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
         </div>
         <p class="signup-footer-text">Already have an account? <a href="#" id="login-link">Login instead</a></p>
       </div>
     </div>
   </div>
 
-  <div>Large</div>
   <script src="app.js"></script>
 
 </body>
