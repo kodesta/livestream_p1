@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="new.css">
+  <link rel="stylesheet" href="style.css?v=7.0">
+  <link rel="stylesheet" href="new.css?v=7.0">
 </head>
 <body class="app-body">
 
@@ -45,18 +45,16 @@
         <span>Upload</span>
       </a>
 
-      <!-- 2. Hide user-profile avatar by default, show only when logged in -->
-<div class="user-profile" style="display: none;">
-        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" alt="User Avatar" class="avatar">
+      <!-- User Profile (Visible when logged in, with vibrant lime green online border) -->
+      <div class="user-profile" style="display: none;" title="My Account">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" alt="User Avatar" class="avatar" id="user-avatar-img">
+        <span class="user-online-badge" title="Online"></span>
       </div>
+      <input type="file" id="avatar-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
     </div>
-
-   
-    <!---end-->
   </header>
-   <!--log out-->
-   <!-- 1. log-out needs an id -->
-<div class="log-out" id="log-out"></div>
+  <!-- Account & Logout Dropdown -->
+  <div class="log-out" id="log-out"></div>
 
   <!-- Navigation Drawer (Hamburger Panel) -->
   <div id="drawer-overlay" class="drawer-overlay"></div>
@@ -451,7 +449,7 @@
           <button type="button" class="social-btn google-btn"><i class="fa-brands fa-google"></i> Google</button>
           <button type="button" class="social-btn facebook-btn"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
         </div>
-        
+        <p class="signup-footer-text">Don't have an account? <a href="#" id="signup-link">Sign up instead</a></p>
       </div>
     </div>
   </div>
@@ -496,7 +494,38 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Social OAuth Modal -->
+  <div id="social-modal" class="login-modal" style="display: none; z-index: 10001;">
+    <div class="login-overlay" id="social-overlay"></div>
+    <div class="login-container" style="max-width: 420px;">
+      <div class="loginheader" style="justify-content: space-between;">
+        <div id="social-modal-brand" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem;">
+          <i class="fa-brands fa-google" id="social-brand-icon" style="color: #ea4335; font-size: 1.4rem;"></i>
+          <span id="social-brand-name">Sign in with Google</span>
+        </div>
+        <button id="social-close-btn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="login-body" style="padding-top: 10px;">
+        <p class="login-subtitle" id="social-modal-subtitle">Choose an account or enter your profile to continue to Livestream.</p>
+
+        <form id="social-form">
+          <div class="input-group">
+            <label for="social-name">Your Name</label>
+            <input type="text" id="social-name" required placeholder="Alex Smith" value="Alex Smith">
+          </div>
+          <div class="input-group">
+            <label for="social-email">Account Email</label>
+            <input type="email" id="social-email" required placeholder="alex@gmail.com" value="alex.smith@gmail.com">
+          </div>
+          <button type="submit" id="social-submit-btn" class="login-submit-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span id="social-submit-text">Continue with Google</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=4.0"></script>
 
 </body>
 </html>

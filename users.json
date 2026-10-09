@@ -1,0 +1,61 @@
+[
+  {
+    "user_id": 4,
+    "email": "verify_1791571045822@example.com",
+    "password_hash": "$2b$10$TKZCkxxgFiN6u8EFF0xiLeHNugRZ0WYz9gm2UWO.vAAFywJzh9Utq",
+    "display_name": "Verification User",
+    "created_at": "2026-10-09T18:38:18.704Z"
+  },
+  {
+    "user_id": 5,
+    "email": "google_tester_1791571102989@gmail.com",
+    "password_hash": "$2b$10$/5gzUJxf5iVG7StONeS9h.cCrte/y5LiJKc4eC.Eao3TimjKg3Amm",
+    "display_name": "Google Tester",
+    "created_at": "2026-10-09T18:38:24.243Z",
+    "provider": "google"
+  },
+  {
+    "user_id": 6,
+    "email": "fb_tester_1791571104316@facebook.com",
+    "password_hash": "$2b$10$YrRtRbni3PXolbZKuySsLePoPFSqGXLT1yV/prbtCJoBQ4A10stlm",
+    "display_name": "Facebook Tester",
+    "created_at": "2026-10-09T18:38:25.435Z",
+    "provider": "facebook"
+  },
+  {
+    "user_id": 7,
+    "email": "user_1791571493017@example.com",
+    "password_hash": "$2b$10$hon4ldDEAFkcHE9YIbGprOwfVucViBhcUpGMJC6GU2VgeagV5tBii",
+    "display_name": "Test User 1791571493017",
+    "created_at": "2026-10-09T18:44:59.603Z"
+  },
+  {
+    "user_id": 8,
+    "email": "google_1791571493017@gmail.com",
+    "password_hash": "$2b$10$jlhAHrFow3t9LeUjDx2t9ebNr2vupYYF8yQIRm6fTwPCblNi0MBh6",
+    "display_name": "Google User 1791571493017",
+    "created_at": "2026-10-09T18:45:03.267Z",
+    "provider": "google"
+  },
+  {
+    "user_id": 9,
+    "email": "fb_1791571493017@facebook.com",
+    "password_hash": "$2b$10$zW7LFjrUofVSsKyRpAYJ1u1uy0XV/0Qw8xQrS8ZELt8c.Rpopqr5.",
+    "display_name": "Facebook User 1791571493017",
+    "created_at": "2026-10-09T18:45:04.524Z",
+    "provider": "facebook"
+  },
+  {
+    "user_id": 10,
+    "email": "jb@gmail.com",
+    "password_hash": "$2b$10$MzhI0Ly7KqNmMym0O9O1penjfIu7xRzjvTUROIAnHQ8zk8h.sGU06",
+    "display_name": "reot for",
+    "created_at": "2026-10-09T18:51:22.081Z",
+    "avatar": "/uploads/avatars/avatar-1791572922330-11289272.jpg"
+  },
+  {
+    "email": "test_avatar_user@example.com",
+    "avatar": "/uploads/avatars/avatar-1791572694711-561357018.png",
+    "created_at": "2026-10-09T19:04:55.036Z"
+  }
+]

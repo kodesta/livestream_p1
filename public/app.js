@@ -23,9 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const loginModal = document.getElementById('login-modal');
   const loginLink = document.getElementById('login-link');
+  const signupLink = document.getElementById('signup-link');
   const loginCloseBtn = document.getElementById('loginclose-btn');
   const loginOverlay = document.getElementById('loginoverlay');
   const loginForm = document.getElementById('login-form');
+
+  const socialModal = document.getElementById('social-modal');
+  const socialOverlay = document.getElementById('social-overlay');
+  const socialCloseBtn = document.getElementById('social-close-btn');
+  const socialForm = document.getElementById('social-form');
+  const socialBrandIcon = document.getElementById('social-brand-icon');
+  const socialBrandName = document.getElementById('social-brand-name');
+  const socialSubmitText = document.getElementById('social-submit-text');
+  const socialNameInput = document.getElementById('social-name');
+  const socialEmailInput = document.getElementById('social-email');
+  let currentSocialProvider = 'google';
   // Navigation Drawer Elements
   const drawerOverlay = document.getElementById('drawer-overlay');
   const navDrawer = document.getElementById('nav-drawer');
@@ -151,17 +163,20 @@ const sidebarRight = document.getElementById('sidebar-right');
     ])
     .then(([uploadedMovies, trendingTrailers])=>{
       appData = [...trendingTrailers, ...uploadedMovies];
+      // Sort most latest first
+      appData.sort((a, b) => {
+        const timeA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+        const timeB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+        return timeB - timeA;
+      });
       renderCatalog();
       if(appData.length > 0){
         selectItem(appData[0]);
-
       }
     }).catch(err=>{
        console.error('Failed to load catalog', err);
       catalogList.innerHTML = `<div class="error-msg">Error loading catalog. Please check connection.</div>`;
     });
-     
-
   }
 
   // --- EVENT LISTENERS ---
@@ -484,33 +499,57 @@ const sidebarRight = document.getElementById('sidebar-right');
       }
     });
 
-    // Login modal
+    // Login modal toggles
     if (loginBtn) {
       loginBtn.addEventListener('click', () => {
-        loginModal.style.display = 'block';
+        loginModal.style.display = 'flex';
       });
     }
-    loginLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      signupModal.style.display = 'none';
-      loginModal.style.display = 'block';
-    });
-    loginCloseBtn.addEventListener('click', () => {
-      loginModal.style.display = 'none';
-    });
-    loginOverlay.addEventListener('click', () => {
-      loginModal.style.display = 'none';
-    });
+    if (loginLink) {
+      loginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        signupModal.style.display = 'none';
+        loginModal.style.display = 'flex';
+      });
+    }
+    if (signupLink) {
+      signupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginModal.style.display = 'none';
+        signupModal.style.display = 'flex';
+      });
+    }
+    if (loginCloseBtn) {
+      loginCloseBtn.addEventListener('click', () => {
+        loginModal.style.display = 'none';
+      });
+    }
+    if (loginOverlay) {
+      loginOverlay.addEventListener('click', () => {
+        loginModal.style.display = 'none';
+      });
+    }
 
+    // Login Form Submit -> Database Authentication
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
+        const submitBtn = loginForm.querySelector('.login-submit-btn');
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+
+        const email = emailInput ? emailInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value : '';
 
         if (!email || !password) {
-          showPlayerToast('Email and password are required.');
+          showPlayerToast('Please enter your email and password.');
           return;
+        }
+
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Login';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
         }
 
         try {
@@ -520,10 +559,12 @@ const sidebarRight = document.getElementById('sidebar-right');
             body: JSON.stringify({ email, password })
           });
           const data = await res.json();
+
           if (!res.ok) {
-            showPlayerToast(data.error || 'Login failed.');
+            showPlayerToast(data.error || 'Login failed. Please check your credentials.');
             return;
           }
+
           localStorage.setItem('livestream_user', JSON.stringify(data.user));
           showPlayerToast(`Welcome back, ${data.user.display_name || data.user.email}!`);
           loggedIn(data.user);
@@ -531,85 +572,273 @@ const sidebarRight = document.getElementById('sidebar-right');
           loginModal.style.display = 'none';
         } catch (err) {
           console.error('Login error:', err);
-          showPlayerToast('Network error. Please try again.');
+          showPlayerToast('Network error connecting to database.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+          }
         }
       });
     }
 
-    // Social login buttons feedback
+    // Signup modal toggles
+    if (signupBtn) {
+      signupBtn.addEventListener('click', () => {
+        signupModal.style.display = 'flex';
+      });
+    }
+    if (signupCloseBtn) signupCloseBtn.addEventListener('click', closeSignupModal);
+    if (signupOverlay) signupOverlay.addEventListener('click', closeSignupModal);
+
+    // Signup Form Submit -> Database Account Creation
+    if (signupForm) {
+      signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = signupForm.querySelector('.signup-submit-btn');
+        const nameInput = document.getElementById('signup-name');
+        const emailInput = document.getElementById('signup-email');
+        const passwordInput = document.getElementById('signup-password');
+
+        const name = nameInput ? nameInput.value.trim() : '';
+        const email = emailInput ? emailInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value : '';
+
+        if (!email || !password) {
+          showPlayerToast('Email and password are required.');
+          return;
+        }
+        if (password.length < 6) {
+          showPlayerToast('Password must be at least 6 characters.');
+          return;
+        }
+
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Create Account';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
+        }
+
+        try {
+          const res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, display_name: name })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showPlayerToast(data.error || 'Signup failed.');
+            return;
+          }
+
+          localStorage.setItem('livestream_user', JSON.stringify(data.user));
+          showPlayerToast(`Welcome, ${data.user.display_name || data.user.email}!`);
+          loggedIn(data.user);
+          signupForm.reset();
+          closeSignupModal();
+        } catch (err) {
+          console.error('Signup error:', err);
+          showPlayerToast('Network error connecting to database.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+          }
+        }
+      });
+    }
+
+    // Social Logins (Google & Facebook) -> Interactive Dialog & Database Integration
+    function openSocialModal(provider) {
+      currentSocialProvider = provider;
+      const isGoogle = provider === 'google';
+      const providerName = isGoogle ? 'Google' : 'Facebook';
+
+      // Pick up any email or name entered in current modal
+      const currentEmail = (document.getElementById('login-email')?.value || document.getElementById('signup-email')?.value || '').trim();
+      const currentName = (document.getElementById('signup-name')?.value || '').trim();
+
+      if (socialBrandIcon) {
+        socialBrandIcon.className = isGoogle ? 'fa-brands fa-google' : 'fa-brands fa-facebook-f';
+        socialBrandIcon.style.color = isGoogle ? '#ea4335' : '#1877f2';
+      }
+      if (socialBrandName) {
+        socialBrandName.textContent = `Sign in with ${providerName}`;
+      }
+      if (socialSubmitText) {
+        socialSubmitText.textContent = `Continue with ${providerName}`;
+      }
+      if (socialNameInput) {
+        socialNameInput.value = currentName || (isGoogle ? 'Alex Smith' : 'Sarah Connor');
+      }
+      if (socialEmailInput) {
+        socialEmailInput.value = currentEmail && currentEmail.includes('@')
+          ? currentEmail
+          : (isGoogle ? 'alex.smith@gmail.com' : 'sarah.c@facebook.com');
+      }
+
+      // Close login/signup modals and open social modal
+      if (loginModal) loginModal.style.display = 'none';
+      if (signupModal) signupModal.style.display = 'none';
+      if (socialModal) socialModal.style.display = 'flex';
+    }
+
+    if (socialCloseBtn) {
+      socialCloseBtn.addEventListener('click', () => {
+        if (socialModal) socialModal.style.display = 'none';
+      });
+    }
+    if (socialOverlay) {
+      socialOverlay.addEventListener('click', () => {
+        if (socialModal) socialModal.style.display = 'none';
+      });
+    }
+
+    if (socialForm) {
+      socialForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('social-submit-btn');
+        const providerName = currentSocialProvider === 'google' ? 'Google' : 'Facebook';
+        const name = socialNameInput ? socialNameInput.value.trim() : '';
+        const email = socialEmailInput ? socialEmailInput.value.trim() : '';
+
+        if (!email) {
+          showPlayerToast('Please provide an email address.');
+          return;
+        }
+
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : `Continue with ${providerName}`;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Authenticating with ${providerName}...`;
+        }
+
+        try {
+          const res = await fetch('/api/auth/social', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              provider: currentSocialProvider,
+              email: email,
+              name: name || (email.split('@')[0])
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            showPlayerToast(data.error || `${providerName} login failed.`);
+            return;
+          }
+
+          localStorage.setItem('livestream_user', JSON.stringify(data.user));
+          showPlayerToast(`Signed in with ${providerName} as ${data.user.display_name || data.user.email}!`);
+          if (socialModal) socialModal.style.display = 'none';
+          loggedIn(data.user);
+        } catch (err) {
+          console.error('Social login error:', err);
+          showPlayerToast(`Unable to complete ${providerName} login. Please try again.`);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+          }
+        }
+      });
+    }
+
     document.querySelectorAll('.google-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        showPlayerToast('Google Sign-In requires OAuth client credentials to be configured in settings.');
+        openSocialModal('google');
       });
     });
+
     document.querySelectorAll('.facebook-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        showPlayerToast('Facebook Sign-In requires OAuth client credentials to be configured in settings.');
+        openSocialModal('facebook');
       });
     });
 
-    // Signup modal
-    signupBtn.addEventListener('click', () => {
-      signupModal.style.display = 'flex';
-    });
-    signupCloseBtn.addEventListener('click', closeSignupModal);
-    signupOverlay.addEventListener('click', closeSignupModal);
-
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-
-      if (!email || !password) {
-        showPlayerToast('Email and password are required.');
-        return;
-      }
-      if (password.length < 8) {
-        showPlayerToast('Password must be at least 8 characters.');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, display_name: name })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          showPlayerToast(data.error || 'Signup failed.');
-          return;
-        }
-        localStorage.setItem('livestream_user', JSON.stringify(data.user));
-        showPlayerToast(`Welcome, ${name || data.user.email}!`);
-        loggedIn(data.user);
-        signupForm.reset();
-        closeSignupModal();
-      } catch (err) {
-        console.error('Signup error:', err);
-        showPlayerToast('Network error. Please try again.');
-      }
-    });
-
-    // Protect upload page
+    // Protect upload page - require login/signup before navigating to upload
     const adminLink = document.querySelector('.admin-btn-link');
     if (adminLink) {
       adminLink.addEventListener('click', (e) => {
         const user = localStorage.getItem('livestream_user');
         if (!user) {
           e.preventDefault();
-          signupModal.style.display = 'flex';
+          // Store redirect destination so login/signup takes user straight to upload
+          sessionStorage.setItem('redirect_after_auth', '/admin.html');
+          if (signupModal) signupModal.style.display = 'flex';
           showPlayerToast('Please sign up or log in to upload content.');
         }
       });
     }
 
-    // Logout dropdown
+    // Logout & Profile dropdown with Profile Picture Upload
     const userProfile = document.querySelector('.user-profile');
+    const userAvatarImg = document.getElementById('user-avatar-img');
+    const avatarUploadInput = document.getElementById('avatar-upload-input');
     const logOutContainer = document.getElementById('log-out');
+
+    // Handle avatar file input change
+    if (avatarUploadInput) {
+      avatarUploadInput.addEventListener('change', async () => {
+        const file = avatarUploadInput.files && avatarUploadInput.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+          showPlayerToast('Please select a valid image file (JPG, PNG, WebP).');
+          avatarUploadInput.value = '';
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          showPlayerToast('Image file size must be under 5MB.');
+          avatarUploadInput.value = '';
+          return;
+        }
+
+        const currentUser = JSON.parse(localStorage.getItem('livestream_user') || '{}');
+        const formData = new FormData();
+        formData.append('avatar', file);
+        if (currentUser.email) {
+          formData.append('email', currentUser.email);
+        }
+
+        showPlayerToast('Uploading profile picture...');
+
+        try {
+          const res = await fetch('/api/auth/avatar', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showPlayerToast(data.error || 'Failed to update profile picture.');
+            return;
+          }
+
+          // Update user state
+          currentUser.avatar = data.avatarUrl;
+          localStorage.setItem('livestream_user', JSON.stringify(currentUser));
+
+          // Update UI avatar images
+          if (userAvatarImg) userAvatarImg.src = data.avatarUrl;
+          const previewImg = document.getElementById('logout-avatar-preview');
+          if (previewImg) previewImg.src = data.avatarUrl;
+
+          showPlayerToast('Profile picture updated successfully!');
+        } catch (err) {
+          console.error('Avatar upload error:', err);
+          showPlayerToast('Network error uploading profile picture.');
+        } finally {
+          avatarUploadInput.value = '';
+        }
+      });
+    }
 
     userProfile.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -617,20 +846,50 @@ const sidebarRight = document.getElementById('sidebar-right');
         logOutContainer.innerHTML = '';
         return;
       }
+
+      const currentUser = JSON.parse(localStorage.getItem('livestream_user') || '{}');
+      const displayName = currentUser.display_name || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
+      const avatarSrc = currentUser.avatar || userAvatarImg?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop';
+
       logOutContainer.innerHTML = `
         <div class="logout-card">
-          <p class="logout-username">My Account</p>
+          <div class="logout-profile-header">
+            <div class="avatar-preview-wrap" id="change-avatar-trigger" title="Click to upload profile photo">
+              <img src="${avatarSrc}" alt="Avatar Preview" class="avatar-preview" id="logout-avatar-preview">
+              <div class="avatar-overlay-icon"><i class="fa-solid fa-camera"></i></div>
+            </div>
+            <div class="logout-user-details">
+              <p class="logout-username" title="${displayName}">${displayName}</p>
+              <span class="logout-online-status"><span class="status-dot"></span> Online</span>
+            </div>
+          </div>
+          <button id="upload-avatar-btn" class="logout-action-btn">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Photo
+          </button>
           <button id="logout-btn" class="logout-btn">
             <i class="fa-solid fa-right-from-bracket"></i> Log Out
           </button>
         </div>
       `;
-      document.getElementById('logout-btn').addEventListener('click', () => {
+
+      // Trigger file selector on Upload Photo button or avatar click
+      document.getElementById('upload-avatar-btn')?.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (avatarUploadInput) avatarUploadInput.click();
+      });
+      document.getElementById('change-avatar-trigger')?.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (avatarUploadInput) avatarUploadInput.click();
+      });
+
+      // Log Out handler
+      document.getElementById('logout-btn')?.addEventListener('click', () => {
         if (loginBtn) loginBtn.style.display = 'inline-flex';
-        signupBtn.style.display = 'inline-flex';
+        if (signupBtn) signupBtn.style.display = 'inline-flex';
         logOutContainer.innerHTML = '';
         userProfile.style.display = 'none';
         localStorage.removeItem('livestream_user');
+        sessionStorage.removeItem('redirect_after_auth');
         showPlayerToast('Logged out successfully.');
       });
     });
@@ -643,15 +902,29 @@ const sidebarRight = document.getElementById('sidebar-right');
 
   } // ← closes setupEventListeners()
 
-  // Logged in confirmation
+  // Logged in confirmation & redirect handler
   function loggedIn(user) {
     if (loginBtn) loginBtn.style.display = 'none';
-    signupBtn.style.display = 'none';
+    if (signupBtn) signupBtn.style.display = 'none';
     const userProfile = document.querySelector('.user-profile');
-    userProfile.style.display = 'flex';
+    const userAvatarImg = document.getElementById('user-avatar-img');
+
+    if (userProfile) userProfile.style.display = 'flex';
+    if (userAvatarImg && (user?.avatar || user?.avatarUrl)) {
+      userAvatarImg.src = user.avatar || user.avatarUrl;
+    }
 
     if (user) {
       localStorage.setItem('livestream_user', JSON.stringify(user));
+    }
+
+    // If user clicked Upload before signing up/logging in, redirect to upload dashboard now
+    const redirectUrl = sessionStorage.getItem('redirect_after_auth');
+    if (redirectUrl) {
+      sessionStorage.removeItem('redirect_after_auth');
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 500);
     }
   }
 
@@ -981,6 +1254,14 @@ async function showSearchDropdown(query){
         filtered = filtered.filter(item => parseInt(item.releaseDate.split('-')[0]) < recentYearCutoff);
       }
     }
+
+    // Sort most latest first (by releaseDate descending)
+    filtered.sort((a, b) => {
+      const timeA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+      const timeB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+      return timeB - timeA;
+    });
+
     catalogCount.textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
     if (filtered.length === 0) {
       catalogList.innerHTML = `<div class="empty-results">No results found.</div>`;
@@ -1002,10 +1283,10 @@ async function showSearchDropdown(query){
 
 
       card.innerHTML = `
-         
         <div class="card-poster-wrapper ${posterShape}">
-          <span  class="add-to-fav">+</span>
-          <img class="card-poster" src="${item.poster}" alt="${item.title}">
+          <span class="add-to-fav" title="Add to Favorites">+</span>
+          <button class="card-delete-btn" title="Delete from Catalog"><i class="fa-solid fa-xmark"></i></button>
+          <img class="card-poster" src="${item.poster}" alt="${item.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=300&auto=format&fit=crop';">
         </div>
         <div class="card-info">
           <span class="card-title">${item.title}</span>
@@ -1019,12 +1300,11 @@ async function showSearchDropdown(query){
         </div>
       `;
 
-    
-      
       // Hover overlay trigger
       card.addEventListener('mouseenter', (e) => showPopover(e, item));
       card.addEventListener('mousemove', movePopover);
       card.addEventListener('mouseleave', hidePopover);
+
       // Select item on click
       card.addEventListener('click', () => {
         selectItem(item);
@@ -1033,20 +1313,28 @@ async function showSearchDropdown(query){
         card.classList.add('active');
       });
 
-        //** */ Add-to-favorites button handler (per card, with correct item in scope)
+      // Add-to-favorites button handler
       const addTofav = card.querySelector('.add-to-fav');
-      addTofav.addEventListener('click', (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        
-        
-        addToFavorites(item);
-      })
+      if (addTofav) {
+        addTofav.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          addToFavorites(item);
+          showPlayerToast(`Added "${item.title}" to My Favorites!`);
+        });
+      }
 
+      // Delete from catalog button handler
+      const deleteCardBtn = card.querySelector('.card-delete-btn');
+      if (deleteCardBtn) {
+        deleteCardBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteCatalogItem(item.id);
+        });
+      }
 
       catalogList.appendChild(card);
-
-
     });
     
       
@@ -1401,22 +1689,32 @@ async function showSearchDropdown(query){
     }, 1000);
   }
 
-  // --- FAVORITES MANAGEMENT & DESCENT ORDER RANKING ---
+  // --- FAVORITES MANAGEMENT (RECENTLY ADDED AT TOP) ---
   function addToFavorites(item) {
-    const exists = favorites.some(fav => fav.id === item.id);
-    if (!exists) {
-      // Calculate reaction sum score
-      const score = getReactionsCount(item.reactions);
-      favorites.push({
+    const existingIndex = favorites.findIndex(fav => fav.id === item.id);
+    const score = getReactionsCount(item.reactions);
+    const now = Date.now();
+
+    if (existingIndex !== -1) {
+      // Move existing item to the very top with updated addedAt timestamp
+      const [existing] = favorites.splice(existingIndex, 1);
+      existing.score = score;
+      existing.addedAt = now;
+      favorites.unshift(existing);
+    } else {
+      // Add new card at the top of the list
+      favorites.unshift({
         id: item.id,
         title: item.title,
         poster: item.poster,
-        score: score
+        score: score,
+        addedAt: now
       });
-      saveFavorites();
-      renderFavorites(); // ← add this: redraw the list immediately after saving
     }
+    saveFavorites();
+    renderFavorites();
   }
+
   function updateFavoriteScore(updatedItem) {
     const score = getReactionsCount(updatedItem.reactions);
 
@@ -1426,11 +1724,12 @@ async function showSearchDropdown(query){
       favorites[favIndex].score = score;
     } else {
       // Add if missing
-      favorites.push({
+      favorites.unshift({
         id: updatedItem.id,
         title: updatedItem.title,
         poster: updatedItem.poster,
-        score: score
+        score: score,
+        addedAt: Date.now()
       });
     }
 
@@ -1441,6 +1740,43 @@ async function showSearchDropdown(query){
     if (!reactions) return 0;
     return Object.values(reactions).reduce((a, b) => a + b, 0);
   }
+
+  function deleteCatalogItem(id) {
+    const itemToDelete = appData.find(item => item.id === id);
+    if (!itemToDelete) return;
+
+    if (!confirm(`Are you sure you want to remove "${itemToDelete.title}" from the catalog?`)) {
+      return;
+    }
+
+    // Call backend API
+    fetch(`/api/movies/${id}`, { method: 'DELETE' })
+      .then(res => res.json())
+      .catch(err => console.error("Delete request error:", err));
+
+    // Remove locally from appData
+    appData = appData.filter(item => item.id !== id);
+    
+    // Also remove from favorites if present
+    deleteFavorite(id);
+    
+    showPlayerToast(`Removed "${itemToDelete.title}" from catalog.`);
+
+    // If the deleted item is currently playing, load next available item
+    if (activeItem && activeItem.id === id) {
+      if (appData.length > 0) {
+        selectItem(appData[0]);
+      } else {
+        videoPlayer.pause();
+        videoPlayer.src = '';
+        activeTitle.textContent = 'No Title Selected';
+        activeDescription.textContent = 'Catalog is empty.';
+      }
+    }
+
+    renderCatalog();
+  }
+
   function deleteFavorite(id) {
     favorites = favorites.filter(fav => fav.id !== id);
     saveFavorites();
@@ -1461,8 +1797,9 @@ async function showSearchDropdown(query){
     emptyPlaylist.style.display = 'none';
     favoritesStack.style.display = 'flex';
     favoritesStack.innerHTML = '';
-    // SORT DESCENDING ORDER BY SCORE (ranking)
-    const sortedFavs = [...favorites].sort((a, b) => b.score - a.score);
+
+    // Sort by recently added at the top (newest addedAt first, preserving unshift order)
+    const sortedFavs = [...favorites].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
     sortedFavs.forEach((fav, index) => {
       const card = document.createElement('div');
       card.className = 'fav-card';

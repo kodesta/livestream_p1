@@ -1,26 +1,24 @@
-iframe {
-    display:none; 
-    width:100%; 
-    height:100%;
-    border:none;
+/* Video & general iframe styles */
+#youtube-player {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
+
 
  /* Admin specific layout adjustments */
     .admin-container {
       width: 1200px;
-      
       margin: 0px 200px;
-      padding: 30PX 160px;
+      padding: 30px 160px;
       padding-bottom: 74px;
-      background: var(--bg-secondary);
+      background: rgba(23, 22, 25, 0.98);
       border-radius: 16px;
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-glow);
-      position:absolute;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 20px rgba(184, 122, 85, 0.06);
+      position: absolute;
       z-index: 100;
       scrollbar-width: auto;
-    
-      
     }
 
     .admin-header-row {
@@ -28,14 +26,15 @@ iframe {
       align-items: center;
       justify-content: space-between;
       margin-bottom: 32px;
-      border-bottom: 1px solid var(--glass-border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding-bottom: 16px;
     }
 
     .admin-title {
       font-family: 'Montserrat', sans-serif;
       font-weight: 800;
-      font-size: 1rem;
+      font-size: 1.1rem;
+      color: var(--text-main);
     }
 
     .back-home-btn {
@@ -47,7 +46,7 @@ iframe {
       transition: var(--transition-fast);
     }
     .back-home-btn:hover {
-      color: var(--accent-indigo);
+      color: #c4a085;
     }
 
     .form-grid {
@@ -79,7 +78,7 @@ iframe {
     select,
     textarea {
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
       color: var(--text-main);
       padding: 12px;
@@ -93,14 +92,15 @@ iframe {
     input[type="number"]:focus,
     select:focus,
     textarea:focus {
-      border-color: var(--accent-indigo);
+      border-color: rgba(190, 150, 120, 0.5);
       background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 12px rgba(184, 122, 85, 0.15);
     }
 
     .file-input-wrapper {
       position: relative;
       background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed var(--glass-border);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
       border-radius: 8px;
       padding: 20px;
       text-align: center;
@@ -108,12 +108,12 @@ iframe {
       transition: var(--transition-smooth);
     }
     .file-input-wrapper:hover {
-      border-color: var(--accent-purple);
-      background: rgba(139, 92, 246, 0.03);
+      border-color: rgba(190, 150, 120, 0.5);
+      background: rgba(184, 122, 85, 0.04);
     }
     .file-input-wrapper i {
       font-size: 1rem;
-      color: var(--text-dark);
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
     .file-input-wrapper input[type="file"] {
@@ -137,27 +137,28 @@ iframe {
       border-radius: 12px;
       font-size: 0.8rem;
       background: rgba(255,255,255,0.03);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text-muted);
       cursor: pointer;
+      transition: var(--transition-fast);
     }
 
     .source-tab.active {
-      background: rgba(99, 102, 241, 0.15);
-      border-color: var(--accent-indigo);
+      background: rgba(184, 122, 85, 0.14);
+      border-color: rgba(190, 150, 120, 0.4);
       color: var(--text-main);
     }
 
     .upload-btn {
-      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-indigo) 100%);
-      color: #fff;
+      background: linear-gradient(135deg, #38323e 0%, #25212a 100%);
+      border: 1px solid rgba(190, 160, 140, 0.3);
+      color: #f5f4f7;
       font-weight: 600;
       font-size: 1rem;
       padding: 14px 28px;
       border-radius: 8px;
-      border: none;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       transition: var(--transition-smooth);
       margin-top: 16px;
       display: flex;
@@ -166,8 +167,10 @@ iframe {
       gap: 10px;
     }
     .upload-btn:hover {
+      background: linear-gradient(135deg, #463e4e 0%, #2c2733 100%);
+      border-color: rgba(190, 160, 140, 0.6);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(184, 122, 85, 0.2);
     }
 
     /* Progress bar upload status */
@@ -175,7 +178,7 @@ iframe {
       display: none;
       margin-top: 24px;
       background: rgba(255,255,255,0.03);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
       padding: 16px;
     }
@@ -190,7 +193,7 @@ iframe {
     .progress-bar-track {
       width: 100%;
       height: 8px;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
       border-radius: 4px;
       overflow: hidden;
     }
@@ -198,7 +201,7 @@ iframe {
     .progress-bar-bar {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-indigo));
+      background: linear-gradient(90deg, #38323e, #8a6a55);
       border-radius: 4px;
       transition: width 0.1s ease;
     }
