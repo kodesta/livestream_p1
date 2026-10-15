@@ -4,7 +4,8 @@
   "description": "Premium Video and TV Streaming Website",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/top_nav.test.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

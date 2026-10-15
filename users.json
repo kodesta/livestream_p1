@@ -57,5 +57,13 @@
     "email": "test_avatar_user@example.com",
     "avatar": "/uploads/avatars/avatar-1791572694711-561357018.png",
     "created_at": "2026-10-09T19:04:55.036Z"
+  },
+  {
+    "user_id": 11,
+    "email": "jb56@gmail.com",
+    "password_hash": "$2b$10$5iOnD0P5hosvv2PVK51aeuE2r2WW7s5TbbsqJ4w1M1pePkq37Rf0W",
+    "display_name": "leth jose",
+    "created_at": "2026-10-12T13:33:13.330Z",
+    "avatar": null
   }
 ]

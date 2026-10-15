@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // --- APPLICATION STATE ---
   let appData = [];
-  let favorites = JSON.parse(localStorage.getItem('livestream_favorites')) || [];
+  let favorites = [];
   let activeItem = null;
   let activeEpisode = null;
   let currentFilters = {
@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const rightSidebarDesc = document.getElementById('right-sidebar-desc');
   const rightPlaylistContainer = document.getElementById('right-playlist-container');
   const emptyPlaylist = document.getElementById('empty-playlist');
+  const emptyAuthBtn = document.getElementById('empty-auth-btn');
   const favoritesStack = document.getElementById('favorites-stack');
   const episodesView = document.getElementById('episodes-view');
   const seasonSelect = document.getElementById('season-select');
@@ -119,23 +120,72 @@ const sidebarRight = document.getElementById('sidebar-right');
   //logout
   const logOut = document.getElementById('log-out');
    //icon for log
-   
+
+  // --- USER AUTHENTICATION & FAVORITES HELPERS ---
+  function getCurrentUser() {
+    try {
+      const stored = localStorage.getItem('livestream_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function isUserLoggedIn() {
+    return getCurrentUser() !== null;
+  }
+
+  function getFavoritesKey(user) {
+    const u = user || getCurrentUser();
+    if (!u) return null;
+    const uid = u.id || u.email || 'user';
+    return `livestream_favorites_${uid}`;
+  }
+
+  function loadUserFavorites(user) {
+    const targetUser = user || getCurrentUser();
+    if (!targetUser) {
+      return [];
+    }
+    const key = getFavoritesKey(targetUser);
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        return JSON.parse(stored) || [];
+      }
+      // Migrate legacy non-prefixed key if found
+      const legacy = localStorage.getItem('livestream_favorites');
+      if (legacy) {
+        const parsedLegacy = JSON.parse(legacy);
+        if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+          localStorage.setItem(key, JSON.stringify(parsedLegacy));
+          localStorage.removeItem('livestream_favorites');
+          return parsedLegacy;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading user favorites:', e);
+    }
+    return [];
+  }
 
   // --- INITIALIZATION ---
   init();
   function init() {
     fetchCatalog();
     setupEventListeners();
-    renderFavorites();
-    checkSession(); // ← add this
+    checkSession();
   }
 
   function checkSession() {
-  const user = localStorage.getItem('livestream_user');
-  if (user) {
-    loggedIn(JSON.parse(user));
+    const user = getCurrentUser();
+    if (user) {
+      loggedIn(user);
+    } else {
+      favorites = [];
+      renderFavorites();
+    }
   }
-}
 
   // --- API CALLS ---
   /*function fetchCatalog() {
@@ -233,10 +283,14 @@ const sidebarRight = document.getElementById('sidebar-right');
       });
     });
 
-    // Search input
+    // Search input - Instant YouTube-style search dropdown & keyboard navigation
+    // (Notice: Search operates independently and does NOT mutate or remove catalog cards)
+    let selectedDropdownIndex = -1;
+
     searchInput.addEventListener('input', () => {
-      const query = searchInput.value.trim().toLowerCase();
-      currentFilters.search = query;
+      const query = searchInput.value.trim();
+      selectedDropdownIndex = -1;
+
       if (query.length > 0) {
         searchClearBtn.style.display = 'block';
         showSearchDropdown(query);
@@ -246,36 +300,58 @@ const sidebarRight = document.getElementById('sidebar-right');
       }
     });
 
-    // Enter key support
-    searchInput.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
-        const query = searchInput.value.trim();
-        if (!query) return;
-        try {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-          const results = await res.json();
-          if (results.length > 0) {
-            selectItem(results[0]);
-            searchInput.value = '';
-            currentFilters.search = '';
-            searchClearBtn.style.display = 'none';
-            hideSearchDropdown();
+    searchInput.addEventListener('focus', () => {
+      const query = searchInput.value.trim();
+      if (query.length > 0) {
+        showSearchDropdown(query);
+      }
+    });
+
+    // Keyboard navigation: ArrowDown, ArrowUp, Enter, Escape
+    searchInput.addEventListener('keydown', (e) => {
+      const dropdown = document.getElementById('search-dropdown');
+      const items = dropdown ? Array.from(dropdown.querySelectorAll('.search-result-item')) : [];
+
+      if (e.key === 'ArrowDown') {
+        if (!items.length) return;
+        e.preventDefault();
+        selectedDropdownIndex = (selectedDropdownIndex + 1) % items.length;
+        items.forEach((el, idx) => el.classList.toggle('selected', idx === selectedDropdownIndex));
+        items[selectedDropdownIndex]?.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        if (!items.length) return;
+        e.preventDefault();
+        selectedDropdownIndex = (selectedDropdownIndex - 1 + items.length) % items.length;
+        items.forEach((el, idx) => el.classList.toggle('selected', idx === selectedDropdownIndex));
+        items[selectedDropdownIndex]?.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (items.length > 0 && selectedDropdownIndex >= 0 && items[selectedDropdownIndex]) {
+          items[selectedDropdownIndex].dispatchEvent(new MouseEvent('mousedown'));
+        } else if (items.length > 0) {
+          items[0].dispatchEvent(new MouseEvent('mousedown'));
+        } else {
+          const query = searchInput.value.trim().toLowerCase();
+          const matches = filterAndRankTitles(query, appData);
+          if (matches.length > 0) {
+            playTitleOnScreen(matches[0]);
           }
-        } catch (err) {
-          console.error('Search enter error:', err);
         }
+      } else if (e.key === 'Escape') {
+        hideSearchDropdown();
       }
     });
 
     searchClearBtn.addEventListener('click', () => {
       searchInput.value = '';
-      currentFilters.search = '';
+      selectedDropdownIndex = -1;
       searchClearBtn.style.display = 'none';
       hideSearchDropdown();
+      searchInput.focus();
     });
 
     document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target)) {
+      if (!searchInput.contains(e.target) && !e.target.closest('#search-dropdown')) {
         hideSearchDropdown();
       }
     });
@@ -419,6 +495,44 @@ const sidebarRight = document.getElementById('sidebar-right');
     // Fullscreen & Theater
     fullscreenBtn.addEventListener('click', toggleFullscreen);
     theaterBtn.addEventListener('click', toggleTheaterMode);
+
+    // Aspect Ratio (9:16 Portrait vs 16:9 Landscape)
+    const aspectRatioBtn = document.getElementById('aspect-ratio-btn');
+    const quickRatioBtn = document.getElementById('quick-ratio-btn');
+
+    function toggleAspectRatio() {
+      const isPortrait = videoContainer.classList.toggle('portrait-mode');
+      updateAspectRatioUI(isPortrait);
+      showPlayerToast(isPortrait ? 'Switched to 9:16 Portrait (Mobile) view' : 'Switched to 16:9 Landscape view');
+    }
+
+    function updateAspectRatioUI(isPortrait) {
+      if (aspectRatioBtn) {
+        aspectRatioBtn.classList.toggle('active', isPortrait);
+        aspectRatioBtn.title = isPortrait ? 'Switch to Landscape (16:9)' : 'Switch to Vertical (9:16)';
+        aspectRatioBtn.innerHTML = isPortrait ? '<i class="fa-solid fa-display"></i>' : '<i class="fa-solid fa-mobile-screen"></i>';
+      }
+      if (quickRatioBtn) {
+        quickRatioBtn.classList.toggle('active', isPortrait);
+        quickRatioBtn.title = isPortrait ? 'Switch to Landscape (16:9)' : 'Switch to Vertical (9:16)';
+        quickRatioBtn.innerHTML = isPortrait
+          ? '<i class="fa-solid fa-display"></i> <span class="ratio-label">16:9</span>'
+          : '<i class="fa-solid fa-mobile-screen"></i> <span class="ratio-label">9:16</span>';
+      }
+    }
+
+    if (aspectRatioBtn) aspectRatioBtn.addEventListener('click', toggleAspectRatio);
+    if (quickRatioBtn) quickRatioBtn.addEventListener('click', toggleAspectRatio);
+
+    // Auto-detect aspect ratio on video metadata loaded
+    videoPlayer.addEventListener('loadedmetadata', () => {
+      if (videoPlayer.videoWidth && videoPlayer.videoHeight) {
+        if (videoPlayer.videoHeight > videoPlayer.videoWidth) {
+          videoContainer.classList.add('portrait-mode');
+          updateAspectRatioUI(true);
+        }
+      }
+    });
 
     // Settings
     const settingsBtn = document.getElementById('settings-btn');
@@ -890,6 +1004,8 @@ const sidebarRight = document.getElementById('sidebar-right');
         userProfile.style.display = 'none';
         localStorage.removeItem('livestream_user');
         sessionStorage.removeItem('redirect_after_auth');
+        favorites = [];
+        renderFavorites();
         showPlayerToast('Logged out successfully.');
       });
     });
@@ -899,6 +1015,13 @@ const sidebarRight = document.getElementById('sidebar-right');
         logOutContainer.innerHTML = '';
       }
     });
+
+    // Empty playlist Log In / Sign Up trigger
+    if (emptyAuthBtn) {
+      emptyAuthBtn.addEventListener('click', () => {
+        if (loginModal) loginModal.style.display = 'flex';
+      });
+    }
 
   } // ← closes setupEventListeners()
 
@@ -918,6 +1041,10 @@ const sidebarRight = document.getElementById('sidebar-right');
       localStorage.setItem('livestream_user', JSON.stringify(user));
     }
 
+    // Load and render user-specific favorites upon login/signup
+    favorites = loadUserFavorites(user);
+    renderFavorites();
+
     // If user clicked Upload before signing up/logging in, redirect to upload dashboard now
     const redirectUrl = sessionStorage.getItem('redirect_after_auth');
     if (redirectUrl) {
@@ -928,138 +1055,265 @@ const sidebarRight = document.getElementById('sidebar-right');
     }
   }
 
- 
-
- /* function listmovie(){
-    const filter = [...appData];
-    const listmov = document.createElement('div');
-
-
-     listmov.innerHTML = filter.filter(item=>{
-
-     `
-    <ul>
-      <li>{item.title}</li>
-      </button>
-    </ul>
-  `;
-     })
-
-  }*/
- function checkSession() {
-    const user = localStorage.getItem('livestream_user');
-    if (user) {
-      loggedIn(JSON.parse(user));
-    }
-  }
-
   function closeSignupModal() {
     signupModal.style.display = 'none';
   }
 
+  // --- YOUTUBE-STYLE SEARCH & FILTERING SYSTEM ---
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function filterAndRankTitles(rawQuery, items) {
+    if (!rawQuery || !items || !items.length) return [];
+    const q = rawQuery.trim().toLowerCase();
+    if (!q) return items;
+
+    const scored = [];
+    const seen = new Set();
+    const queryTerms = q.split(/\s+/).filter(Boolean);
+
+    for (const item of items) {
+      if (!item || !item.title) continue;
+      const titleLower = item.title.toLowerCase();
+      if (seen.has(titleLower)) continue;
+
+      let score = 0;
+      let matchType = '';
+
+      // Tier 1: Exact title match
+      if (titleLower === q) {
+        score = 1000;
+        matchType = 'exact';
+      }
+      // Tier 2: Title starts with query (Prefix match, e.g. 'b' -> 'Big Buck Bunny')
+      else if (titleLower.startsWith(q)) {
+        score = 500 + (100 - Math.min(titleLower.length, 100));
+        matchType = 'prefix';
+      }
+      // Tier 3: Word boundary prefix match (e.g. 'b' -> 'Ali Baba', 'The Batman')
+      else {
+        const words = titleLower.split(/[\s\-_:,]+/);
+        const wordMatchIdx = words.findIndex(w => w.startsWith(q));
+        if (wordMatchIdx !== -1) {
+          score = 300 - (wordMatchIdx * 10);
+          matchType = 'word-prefix';
+        }
+        // Multi-term match (e.g. 'bunny big' or 'top gun')
+        else if (queryTerms.length > 1 && queryTerms.every(term => titleLower.includes(term))) {
+          score = 250;
+          matchType = 'multi-term';
+        }
+        // Tier 4: Substring match anywhere in title
+        else if (titleLower.includes(q)) {
+          const pos = titleLower.indexOf(q);
+          score = 150 - Math.min(pos, 50);
+          matchType = 'substring';
+        }
+        // Tier 5: Title acronym / initials match (e.g. 'bbb' -> 'Big Buck Bunny')
+        else {
+          const initials = words.map(w => w[0]).join('');
+          if (initials.startsWith(q)) {
+            score = 120;
+            matchType = 'acronym';
+          }
+        }
+      }
+
+      // Secondary match factors: Genres, Actors, Studio
+      if (score === 0) {
+        if (item.genres && Array.isArray(item.genres) && item.genres.some(g => g.toLowerCase().includes(q))) {
+          score = 60;
+          matchType = 'genre';
+        } else if (item.actors && typeof item.actors === 'string' && item.actors.toLowerCase().includes(q)) {
+          score = 45;
+          matchType = 'actor';
+        } else if (item.studio && typeof item.studio === 'string' && item.studio.toLowerCase().includes(q)) {
+          score = 30;
+          matchType = 'studio';
+        }
+      }
+
+      if (score > 0) {
+        // Boost by rating and release date
+        const ratingBoost = (parseFloat(item.rating) || 0) * 2;
+        const yearBoost = item.releaseDate ? Math.min(parseInt(item.releaseDate.split('-')[0]) - 2000, 25) : 0;
+        const finalScore = score + ratingBoost + yearBoost;
+
+        seen.add(titleLower);
+        scored.push({ item, score: finalScore, matchType });
+      }
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map(s => s.item);
+  }
+
+  function highlightMatchText(text, query) {
+    if (!text) return '';
+    if (!query) return escapeHtml(text);
+    const q = query.trim();
+    if (!q) return escapeHtml(text);
+
+    try {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      const parts = text.split(regex);
+      return parts.map(part => {
+        if (part.toLowerCase() === q.toLowerCase()) {
+          return `<span class="search-match-highlight">${escapeHtml(part)}</span>`;
+        }
+        return escapeHtml(part);
+      }).join('');
+    } catch (e) {
+      return escapeHtml(text);
+    }
+  }
+
   function hideSearchDropdown() {
-    const existing = document.getElementById('search-dropdown');
+    const existing = document.getElementById("search-dropdown");
     if (existing) existing.remove();
   }
- 
-async function showSearchDropdown(query){
-  //remove existing dropdown
-  hideSearchDropdown()
 
-  //new adds
-  if (!query) return;
+  function playTitleOnScreen(item) {
+    if (!item) return;
+    selectItem(item);
 
-  try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    const backendResults = await res.json();
-
-     // 2. Also search KinoCheck trailers already in appData
-    const q = query.toLowerCase();
-    const kinoResults = appData.filter(item =>
-      item.id?.startsWith('kc-') && (
-        item.title?.toLowerCase().includes(q) ||
-        item.genres?.some(g => g.toLowerCase().includes(q))
-      )
-    ).slice(0, 3);
-
-    // 3. Merge — backend first, then kino, deduplicate by title
-    const seen = new Set();
-    const results = [...backendResults, ...kinoResults].filter(item => {
-      if (seen.has(item.title)) return false;
-      seen.add(item.title);
-      return true;
-    }).slice(0, 6);
-
-    if (results.length === 0) return;
-
-  // Filter results
-  /*
-  const results = appData.filter(item =>
-    item.title?.toLowerCase().includes(query) ||
-    item.genres?.some(g => g.toLowerCase().includes(query)) ||
-    item.actors?.toLowerCase().includes(query) ||
-    item.studio?.toLowerCase().includes(query)
-  ).slice(0, 6);*/ // max 6 results
-
- 
-
-//------//
-
-  const dropdown = document.createElement('div');
-    dropdown.id = 'search-dropdown';
-
-    dropdown.innerHTML = results.map(item => `
-      <div class="search-result-item" data-id="${item.id}" style="
-        display:flex; align-items:center; gap:12px;
-        padding:10px 14px; cursor:pointer;
-        border-bottom:1px solid rgba(255,255,255,0.04); color:white;
-      ">
-        <img src="${item.poster || ''}" style="width:36px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'"/>
-        <div>
-          <div style="font-size:0.88rem;font-weight:600;">${item.title}</div>
-          <div style="font-size:0.75rem;color:#64748b;">
-            ${item.type || 'Movie'} • ${item.duration || 'trailer'}
-            ${item.id?.startsWith('kc-') ? ' • <span style="color:#6366f1">trailer</span>' : ''}
-          </div>
-        </div>
-      </div>
-    `).join('');
-
-    dropdown.querySelectorAll('.search-result-item').forEach(el => {
-      el.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        // Check appData first (covers kino results)
-        const selected = appData.find(i => i.id === el.dataset.id)
-          || results.find(i => i.id === el.dataset.id);
-        if (selected) {
-          selectItem(selected);
-          searchInput.value = '';
-          currentFilters.search = '';
-          searchClearBtn.style.display = 'none';
-          hideSearchDropdown();
-        }
-      });
+    // Highlight card in left catalog if currently visible without disturbing the catalog list
+    document.querySelectorAll('.catalog-card').forEach(c => {
+      c.classList.toggle('active', c.getAttribute('data-id') === String(item.id));
     });
 
-   const wrapper = searchInput.parentElement;
+    // Immediate playback start
+    setTimeout(() => {
+      const isYoutube = typeof item.videoUrl === 'string' && item.videoUrl.includes('youtube.com/embed');
+      if (isYoutube) {
+        const youtubeplayer = document.getElementById('youtube-player');
+        if (youtubeplayer) {
+          const sep = item.videoUrl.includes('?') ? '&' : '?';
+          youtubeplayer.src = item.videoUrl + sep + 'autoplay=1&rel=0';
+        }
+      } else if (videoPlayer && videoPlayer.src) {
+        videoPlayer.play().catch(err => {
+          console.log('Autoplay deferred by browser policy:', err);
+        });
+      }
+    }, 50);
+
+    // Reset search bar UI (Catalog remains intact)
+    searchInput.value = '';
+    searchClearBtn.style.display = 'none';
+    hideSearchDropdown();
+    showPlayerToast(`Now Playing: ${item.title}`);
+  }
+
+  function renderSearchDropdownList(results, query) {
+    hideSearchDropdown();
+    if (!query) return;
+
+    const dropdown = document.createElement('div');
+    dropdown.id = 'search-dropdown';
+
+    if (!results || results.length === 0) {
+      dropdown.innerHTML = `
+        <div class="search-empty-item">
+          <i class="fa-solid fa-magnifying-glass" style="margin-right: 8px; color: #c4a085;"></i>
+          No titles found matching "${escapeHtml(query)}"
+        </div>
+      `;
+    } else {
+      dropdown.innerHTML = results.slice(0, 8).map((item, index) => {
+        const isTrailer = item.id?.startsWith('kc-') || (item.videoUrl && item.videoUrl.includes('youtube.com'));
+        const badgeText = isTrailer ? 'TRAILER' : (item.type === 'TV Show' ? 'SERIES' : 'MOVIE');
+        const badgeClass = isTrailer ? 'trailer' : (item.type === 'TV Show' ? 'tv' : 'movie');
+        const highlightedTitle = highlightMatchText(item.title, query);
+        const rating = item.rating ? `<i class="fa-solid fa-star" style="color:#f59e0b;font-size:0.68rem;"></i> ${item.rating}` : '';
+
+        return `
+          <div class="search-result-item ${index === 0 ? 'selected' : ''}" data-id="${item.id}" tabindex="0">
+            <img class="search-result-poster" src="${item.poster || './uploads/imgs/live.png'}" onerror="this.src='./uploads/imgs/live.png'"/>
+            <div class="search-result-info">
+              <div class="search-result-title">${highlightedTitle}</div>
+              <div class="search-result-meta">
+                <span class="search-type-badge ${badgeClass}">${badgeText}</span>
+                <span>${item.duration || 'Full HD'}</span>
+                ${rating ? `<span>•</span> ${rating}` : ''}
+                ${item.releaseDate ? `<span>•</span> <span>${item.releaseDate.split('-')[0]}</span>` : ''}
+              </div>
+            </div>
+            <div class="search-play-icon" title="Play Now">
+              <i class="fa-solid fa-play"></i>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      dropdown.querySelectorAll('.search-result-item').forEach((el, idx) => {
+        el.addEventListener('mouseenter', () => {
+          dropdown.querySelectorAll('.search-result-item').forEach((itemEl, i) => {
+            itemEl.classList.toggle('selected', i === idx);
+          });
+        });
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const id = el.dataset.id;
+          const selected = appData.find(i => String(i.id) === String(id)) || results.find(i => String(i.id) === String(id));
+          if (selected) {
+            playTitleOnScreen(selected);
+          }
+        });
+      });
+    }
+
+    const wrapper = searchInput.parentElement;
     wrapper.style.position = 'relative';
     wrapper.appendChild(dropdown);
-
-  } catch (err) {
-    console.error('Search dropdown error:', err);
-
-    // Full fallback — search appData directly
-    const q = query.toLowerCase();
-    const fallback = appData.filter(item =>
-      item.title?.toLowerCase().includes(q) ||
-      item.genres?.some(g => g.toLowerCase().includes(q)) ||
-      item.actors?.toLowerCase().includes(q) ||
-      item.studio?.toLowerCase().includes(q)
-    ).slice(0, 6);
-
-    console.log('Fallback results:', fallback.length);
   }
-}
+
+  function showSearchDropdown(query) {
+    if (!query) {
+      hideSearchDropdown();
+      return;
+    }
+
+    // Step 1: Instant local in-memory search for 0ms feedback
+    const localRanked = filterAndRankTitles(query, appData);
+    if (localRanked.length > 0) {
+      renderSearchDropdownList(localRanked, query);
+    } else {
+      renderSearchDropdownList([], query);
+    }
+
+    // Step 2: Asynchronous backend query to enrich with any database additions
+    fetch(`/api/search?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(backendResults => {
+        // If user already changed query or closed search, ignore
+        if (searchInput.value.trim().toLowerCase() !== query.toLowerCase()) return;
+
+        // Merge backend results with appData, re-ranking with YouTube algorithm
+        const mergedPool = [...appData];
+        if (Array.isArray(backendResults)) {
+          for (const b of backendResults) {
+            if (!mergedPool.some(m => String(m.id) === String(b.id) || m.title.toLowerCase() === b.title.toLowerCase())) {
+              mergedPool.push(b);
+            }
+          }
+        }
+
+        const reRanked = filterAndRankTitles(query, mergedPool);
+        renderSearchDropdownList(reRanked, query);
+      })
+      .catch(err => {
+        console.warn('Backend search enrichment error:', err);
+      });
+  }
 
 
 
@@ -1216,21 +1470,7 @@ async function showSearchDropdown(query){
   function renderCatalog() {
     let filtered = [...appData];
 
-    // Search filters
-   /* if (currentFilters.search) {
-      const q = currentFilters.search;
-   
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(q) ||
-        item.genres.some(g => g.toLowerCase().includes(q)) ||
-        item.actors.toLowerCase().includes(q) ||
-        item.studio.toLowerCase().includes(q)
-        
-
-        
-       
-      );
-    }*/
+    // Catalog explores categories, genres, and countries independently of search bar typing
     // Genre filter
     if (currentFilters.genre) {
       filtered = filtered.filter(item =>
@@ -1272,7 +1512,31 @@ async function showSearchDropdown(query){
     
 
     catalogList.innerHTML = '';
-    filtered.forEach(item => {
+    
+    function isRecentlyAdded(item, index) {
+      if (item.isNew === true) return true;
+      if (item.releaseDate) {
+        const itemTime = new Date(item.releaseDate).getTime();
+        if (!isNaN(itemTime)) {
+          const now = Date.now();
+          const recentWindowMs = 60 * 24 * 60 * 60 * 1000; // 60 days
+          if (now - itemTime >= 0 && (now - itemTime) <= recentWindowMs) {
+            return true;
+          }
+        }
+        // Top 3 newest additions in latest-sorted catalog if released in current year
+        if (index < 3) {
+          const itemYear = parseInt(item.releaseDate.split('-')[0], 10);
+          const currentYear = new Date().getFullYear();
+          if (itemYear >= currentYear) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    filtered.forEach((item, index) => {
       const card = document.createElement('div');
       card.className = `catalog-card ${activeItem && activeItem.id === item.id ? 'active' : ''}`;
       card.setAttribute('data-id', item.id);
@@ -1280,7 +1544,7 @@ async function showSearchDropdown(query){
       const posterShape = isTrailer ? 'poster-landscape': 'poster-portrait';
 
       const genresHtml = item.genres.slice(0, 2).map(g => `<span class="genre-badge">${g}</span>`).join('');
-
+      const isNew = isRecentlyAdded(item, index);
 
       card.innerHTML = `
         <div class="card-poster-wrapper ${posterShape}">
@@ -1291,8 +1555,11 @@ async function showSearchDropdown(query){
         <div class="card-info">
           <span class="card-title">${item.title}</span>
           <div class="card-meta">
-            <span class="card-rating"><i class="fa-solid fa-star"></i> ${item.rating}</span>
-            <span class="card-duration">${item.duration}</span>
+            <div class="card-meta-left">
+              <span class="card-rating"><i class="fa-solid fa-star"></i> ${item.rating}</span>
+              <span class="card-duration">${item.duration}</span>
+            </div>
+            ${isNew ? '<span class="badge-new">new</span>' : ''}
           </div>
           <div class="card-genres">
             ${genresHtml}
@@ -1319,8 +1586,10 @@ async function showSearchDropdown(query){
         addTofav.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          addToFavorites(item);
-          showPlayerToast(`Added "${item.title}" to My Favorites!`);
+          const added = addToFavorites(item);
+          if (added) {
+            showPlayerToast(`Added "${item.title}" to My Favorites!`);
+          }
         });
       }
 
@@ -1689,8 +1958,16 @@ async function showSearchDropdown(query){
     }, 1000);
   }
 
-  // --- FAVORITES MANAGEMENT (RECENTLY ADDED AT TOP) ---
+  // --- FAVORITES MANAGEMENT (AUTH-GUARDED & USER-SCOPED) ---
   function addToFavorites(item) {
+    if (!isUserLoggedIn()) {
+      showPlayerToast('Please log in or sign up to add to My Favorites.');
+      if (loginModal) {
+        loginModal.style.display = 'flex';
+      }
+      return false;
+    }
+
     const existingIndex = favorites.findIndex(fav => fav.id === item.id);
     const score = getReactionsCount(item.reactions);
     const now = Date.now();
@@ -1713,28 +1990,20 @@ async function showSearchDropdown(query){
     }
     saveFavorites();
     renderFavorites();
+    return true;
   }
 
   function updateFavoriteScore(updatedItem) {
+    if (!isUserLoggedIn()) return;
     const score = getReactionsCount(updatedItem.reactions);
 
     // Find in favorites
     const favIndex = favorites.findIndex(fav => fav.id === updatedItem.id);
     if (favIndex !== -1) {
       favorites[favIndex].score = score;
-    } else {
-      // Add if missing
-      favorites.unshift({
-        id: updatedItem.id,
-        title: updatedItem.title,
-        poster: updatedItem.poster,
-        score: score,
-        addedAt: Date.now()
-      });
+      saveFavorites();
+      renderFavorites();
     }
-
-    saveFavorites();
-    renderFavorites();
   }
   function getReactionsCount(reactions) {
     if (!reactions) return 0;
@@ -1758,7 +2027,7 @@ async function showSearchDropdown(query){
     appData = appData.filter(item => item.id !== id);
     
     // Also remove from favorites if present
-    deleteFavorite(id);
+    deleteFavorite(id, true);
     
     showPlayerToast(`Removed "${itemToDelete.title}" from catalog.`);
 
@@ -1777,23 +2046,58 @@ async function showSearchDropdown(query){
     renderCatalog();
   }
 
-  function deleteFavorite(id) {
+  function deleteFavorite(id, silent = false) {
+    if (!isUserLoggedIn()) {
+      if (!silent) {
+        showPlayerToast('Please log in or sign up to manage My Favorites.');
+        if (loginModal) {
+          loginModal.style.display = 'flex';
+        }
+      }
+      return false;
+    }
     favorites = favorites.filter(fav => fav.id !== id);
     saveFavorites();
     renderFavorites();
+    return true;
   }
 
   function saveFavorites() {
-    localStorage.setItem('livestream_favorites', JSON.stringify(favorites));
+    const user = getCurrentUser();
+    if (!user) return;
+    const key = getFavoritesKey(user);
+    if (key) {
+      localStorage.setItem(key, JSON.stringify(favorites));
+    }
   }
+
   function renderFavorites() {
     // Check if episodes view is currently visible. If so, do not overwrite right sidebar
     if (episodesView.style.display === 'block') return;
-    if (favorites.length === 0) {
+
+    if (!isUserLoggedIn() || favorites.length === 0) {
       emptyPlaylist.style.display = 'flex';
       favoritesStack.style.display = 'none';
+      const emptyDesc = emptyPlaylist.querySelector('span');
+      const emptyText = emptyPlaylist.querySelector('p');
+      if (emptyAuthBtn) {
+        emptyAuthBtn.style.display = !isUserLoggedIn() ? 'inline-flex' : 'none';
+      }
+      if (!isUserLoggedIn()) {
+        if (emptyText) emptyText.textContent = 'Your playlist is empty.';
+        if (emptyDesc) {
+          emptyDesc.textContent = 'Log in or sign up to add movies and build your favorites.';
+        }
+      } else {
+        if (emptyText) emptyText.textContent = 'Your playlist is empty.';
+        if (emptyDesc) {
+          emptyDesc.textContent = 'React to movies or click cards in the catalog to add them to your favorites.';
+        }
+      }
       return;
     }
+
+    if (emptyAuthBtn) emptyAuthBtn.style.display = 'none';
     emptyPlaylist.style.display = 'none';
     favoritesStack.style.display = 'flex';
     favoritesStack.innerHTML = '';

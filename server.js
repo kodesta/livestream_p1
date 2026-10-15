@@ -92,17 +92,39 @@ app.get('/api/search', async (req, res) => {
       item.studio?.toLowerCase().includes(query)
     );
 
-    const seen = new Set(formattedDb.map(i => i.title.toLowerCase()));
-    const combined = [...formattedDb];
-    for (const j of jsonResults) {
-      if (!seen.has(j.title.toLowerCase())) {
-        seen.add(j.title.toLowerCase());
-        combined.push({ ...j, source: 'json' });
+    const calcRelevance = (item) => {
+      const t = (item.title || '').toLowerCase();
+      let score = 0;
+      if (t === query) score += 1000;
+      else if (t.startsWith(query)) score += 500;
+      else {
+        const words = t.split(/[\s\-_:,]+/);
+        if (words.some(w => w.startsWith(query))) score += 300;
+        else if (t.includes(query)) score += 150;
       }
-      if (combined.length >= 6) break;
+      if (item.genres && Array.isArray(item.genres) && item.genres.some(g => g.toLowerCase().includes(query))) score += 40;
+      if (item.actors && typeof item.actors === 'string' && item.actors.toLowerCase().includes(query)) score += 30;
+      if (item.studio && typeof item.studio === 'string' && item.studio.toLowerCase().includes(query)) score += 20;
+      return score;
+    };
+
+    const seen = new Set();
+    const combined = [];
+    for (const item of [...formattedDb, ...jsonResults.map(j => ({ ...j, source: 'json' }))]) {
+      const key = (item.title || '').toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
     }
 
-    return res.json(combined);
+    combined.sort((a, b) => {
+      const diff = calcRelevance(b) - calcRelevance(a);
+      if (diff !== 0) return diff;
+      return (b.rating || 0) - (a.rating || 0);
+    });
+
+    return res.json(combined.slice(0, 8));
 
   } catch (err) {
     console.error('Search error:', err);
@@ -112,9 +134,20 @@ app.get('/api/search', async (req, res) => {
       item.genres?.some(g => g.toLowerCase().includes(query)) ||
       item.actors?.toLowerCase().includes(query) ||
       item.studio?.toLowerCase().includes(query)
-    ).slice(0, 6);
+    );
 
-    return res.json(jsonResults.map(item => ({ ...item, source: 'json' })));
+    const calcRelevance = (item) => {
+      const t = (item.title || '').toLowerCase();
+      if (t === query) return 1000;
+      if (t.startsWith(query)) return 500;
+      if (t.split(/[\s\-_:,]+/).some(w => w.startsWith(query))) return 300;
+      if (t.includes(query)) return 150;
+      return 10;
+    };
+
+    jsonResults.sort((a, b) => calcRelevance(b) - calcRelevance(a));
+
+    return res.json(jsonResults.slice(0, 8).map(item => ({ ...item, source: 'json' })));
   }
 });
 

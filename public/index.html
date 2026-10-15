@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=7.0">
-  <link rel="stylesheet" href="new.css?v=7.0">
+  <link rel="stylesheet" href="style.css?v=9.0">
+  <link rel="stylesheet" href="new.css?v=9.0">
 </head>
 <body class="app-body">
 
@@ -158,6 +158,12 @@
 
       <!-- Video Player viewport -->
       <div class="video-container" id="video-container">
+        <!-- Floating Quick Aspect Ratio Switcher (Top-Right) -->
+        <button id="quick-ratio-btn" class="quick-ratio-btn" title="Switch to Vertical (9:16) / Landscape (16:9)" aria-label="Toggle Aspect Ratio">
+          <i class="fa-solid fa-mobile-screen"></i>
+          <span class="ratio-label">9:16</span>
+        </button>
+
         <video id="main-video-player" playsinline>
           <!-- Stream source set by app.js -->
         </video>
@@ -197,7 +203,7 @@
             <div class="player-title-display" id="player-title-display">
               Select a title
             </div>
-            <!-- Right Controls: Settings, Theater, Fullscreen -->
+            <!-- Right Controls: Settings, Aspect Ratio, Theater, Fullscreen -->
             <div class="controls-right">
               <div class="settings-container">
                 <button id="settings-btn" class="player-btn" title="Settings"><i class="fa-solid fa-gear"></i></button>
@@ -209,6 +215,7 @@
                   <button class="settings-option" data-res="480p">480p (SD)</button>
                 </div>
               </div>
+              <button id="aspect-ratio-btn" class="player-btn aspect-ratio-btn" title="Switch to Vertical (9:16)" aria-label="Toggle Aspect Ratio"><i class="fa-solid fa-mobile-screen"></i></button>
               <button id="theater-btn" class="player-btn" title="Theater Mode"><i class="fa-solid fa-rectangle-ad"></i></button>
               <button id="fullscreen-btn" class="player-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
             </div>
@@ -337,7 +344,10 @@
         <div class="empty-playlist" id="empty-playlist">
           <i class="fa-solid fa-heart-circle-xmark empty-icon"></i>
           <p>Your playlist is empty.</p>
-          <span>React to movies or click cards in the catalog to add them to your favorites.</span>
+          <span id="empty-playlist-desc">React to movies or click cards in the catalog to add them to your favorites.</span>
+          <button type="button" class="empty-auth-btn" id="empty-auth-btn" style="display: none;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Log In / Sign Up
+          </button>
         </div>
         <div class="favorites-stack" id="favorites-stack" style="display: none;">
           <!-- Dynamically filled with ranked cards -->
@@ -525,7 +535,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=10.0"></script>
 
 </body>
 </html>
