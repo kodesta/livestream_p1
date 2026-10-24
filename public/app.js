@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     search: '',
     category: 'all', // 'all', 'movies-all', 'movies-recent', 'movies-old', 'tv-all', 'tv-recent', 'tv-old'
     genre: '',
-    country: ''
+    country: '',
+    ai: false
   };
 
   // --- DOM ELEMENT REFERENCES ---
@@ -249,7 +250,12 @@ const sidebarRight = document.getElementById('sidebar-right');
       item.addEventListener('click', (e) => {
         e.preventDefault();
         const filterVal = item.getAttribute('data-filter');
+        if (filterVal === 'ai') {
+          openBrowseModal('ai', null, 'Made with AI');
+          return;
+        }
         if (filterVal === 'all') {
+          currentFilters.ai = false;
           currentFilters.category = 'all';
           currentFilters.genre = '';
           currentFilters.country = '';
@@ -1374,6 +1380,8 @@ const sidebarRight = document.getElementById('sidebar-right');
       filtered = filtered.filter(item => item.genres.includes(filterVal));
     } else if (filterType === 'country') {
       filtered = filtered.filter(item => item.country === filterVal);
+    } else if (filterType === 'ai') {
+      filtered = filtered.filter(item => item.isAi === true);
     }
     if (filtered.length === 0) {
       modalGrid.innerHTML = `<div class="empty-results">No content found matching selection.</div>`;
@@ -1405,6 +1413,13 @@ const sidebarRight = document.getElementById('sidebar-right');
 
           //let needRender = false;
           // Update left sidebar catalog criteria filter
+          if (filterType === 'ai') {
+            currentFilters.ai = true;
+            currentFilters.category = 'all';
+            currentFilters.genre = '';
+            currentFilters.country = '';
+          } else {
+            currentFilters.ai = false;
           if (filterType === 'category') {
             currentFilters.category = filterVal;
             currentFilters.genre = '';
@@ -1419,6 +1434,7 @@ const sidebarRight = document.getElementById('sidebar-right');
             currentFilters.category = 'all';
             currentFilters.genre = '';
             currentFilters.country = filterVal;
+          }
             //needRender = true;
           }
           //if(needRender){
@@ -1453,6 +1469,10 @@ const sidebarRight = document.getElementById('sidebar-right');
 
   // --- CATALOG RENDERING ---
   function updateCatalogTitle() {
+    if (currentFilters.ai) {
+      catalogTitle.textContent = 'Made with AI';
+      return;
+    }
     let title = 'Explore Catalog';
     if (currentFilters.genre) {
       title = `${currentFilters.genre} Category`;
@@ -1469,6 +1489,10 @@ const sidebarRight = document.getElementById('sidebar-right');
 
   function renderCatalog() {
     let filtered = [...appData];
+
+    if (currentFilters.ai) {
+      filtered = filtered.filter(item => item.isAi === true);
+    }
 
     // Catalog explores categories, genres, and countries independently of search bar typing
     // Genre filter
@@ -1664,6 +1688,10 @@ const sidebarRight = document.getElementById('sidebar-right');
     activeRank.textContent = item.worldRank;
     activeDuration.textContent = item.duration;
     activeCountry.textContent = item.country;
+    const activeAiBadge = document.getElementById('active-ai-badge');
+    if (activeAiBadge) {
+      activeAiBadge.style.display = (item && item.isAi === true) ? 'inline-flex' : 'none';
+    }
     activeStudio.textContent = item.studio;
     activeDescription.textContent = item.description;
 

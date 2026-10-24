@@ -150,7 +150,7 @@ describe('Top Navigation Bar & Components Unit Tests', () => {
   describe('5. Search API Live Endpoint Integration', () => {
     test('GET /api/search?q=bunny returns valid array of matching titles', async () => {
       const data = await new Promise((resolve, reject) => {
-        http.get('http://localhost:3000/api/search?q=bunny', (res) => {
+        http.get('http://127.0.0.1:3000/api/search?q=bunny', (res) => {
           let body = '';
           res.on('data', chunk => body += chunk);
           res.on('end', () => {
@@ -170,7 +170,7 @@ describe('Top Navigation Bar & Components Unit Tests', () => {
 
     test('GET /api/search with empty query returns empty array', async () => {
       const data = await new Promise((resolve, reject) => {
-        http.get('http://localhost:3000/api/search?q=', (res) => {
+        http.get('http://127.0.0.1:3000/api/search?q=', (res) => {
           let body = '';
           res.on('data', chunk => body += chunk);
           res.on('end', () => {
@@ -243,6 +243,35 @@ describe('Top Navigation Bar & Components Unit Tests', () => {
     test('Empty playlist HTML contains empty-auth-btn and descriptive text', () => {
       assert.match(htmlContent, /id="empty-playlist"/, 'empty-playlist container exists');
       assert.match(htmlContent, /id="empty-auth-btn"/, 'empty-auth-btn button exists');
+    });
+  });
+
+  describe('8. Mobile Responsiveness System & Breakpoints', () => {
+    test('Viewport meta tag is set correctly for mobile responsiveness', () => {
+      assert.match(htmlContent, /<meta\s+name="viewport"\s+content="width=device-width,\s*initial-scale=1\.0">/i, 'viewport meta tag must exist with proper scale');
+    });
+
+    test('Tablet and mobile layout orders main video content first', () => {
+      assert.match(styleCssContent, /@media\s*\(max-width:\s*992px\)\s*\{[\s\S]*?\.main-content\s*\{[^}]*order:\s*1;/, 'main-content is ordered first on mobile/tablet');
+      assert.match(styleCssContent, /\.sidebar-left\s*\{[^}]*order:\s*2;/, 'sidebar-left catalog is ordered second');
+      assert.match(styleCssContent, /\.sidebar-right\s*\{[^}]*order:\s*3;/, 'sidebar-right favorites is ordered third');
+    });
+
+    test('Favorites sidebar remains accessible on mobile and tablet without being hidden', () => {
+      assert.match(styleCssContent, /\.sidebar-right\s*\{[^}]*display:\s*flex\s*!important;/, 'sidebar-right remains flex on mobile');
+    });
+
+    test('Touch screens show catalog card actions without requiring hover', () => {
+      assert.match(styleCssContent, /@media\s*\(hover:\s*none\)\s*\{[\s\S]*?\.add-to-fav,\s*\.card-delete-btn\s*\{[^}]*opacity:\s*1\s*!important;/, 'Card actions are visible on touch devices');
+    });
+
+    test('Desktop-only controls are hidden on mobile player layout', () => {
+      assert.match(styleCssContent, /#theater-btn\s*\{[^}]*display:\s*none\s*!important;/, 'theater button is hidden on mobile');
+      assert.match(styleCssContent, /\.player-title-display\s*\{[^}]*display:\s*none\s*!important;/, 'player-title-display is hidden on compact screens');
+    });
+
+    test('Input fields on mobile have 16px font-size to prevent iOS auto-zoom', () => {
+      assert.match(styleCssContent, /input\[type="text"\][\s\S]*?font-size:\s*16px\s*!important;/, 'Inputs prevent iOS zoom with 16px font size');
     });
   });
 });

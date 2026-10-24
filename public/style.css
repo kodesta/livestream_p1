@@ -1889,53 +1889,499 @@ a {
 }
 
 /* ==========================================================================
-   RESPONSIVE LAYOUT MEDIA QUERIES
+   RESPONSIVE LAYOUT & MOBILE SYSTEM
    ========================================================================== */
 
-@media (max-width: 1200px) {
-  .sidebar-right {
-    display: none; /* Hide right panel or stack it on smaller laptop view */
+/* Touch device optimization: ensure card actions are tappable without hover */
+@media (hover: none) {
+  .add-to-fav,
+  .card-delete-btn {
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 }
 
-@media (max-width: 900px) {
-  .app-layout {
-    flex-direction: column;
-    overflow-y: auto;
-    height: auto;
+/* --- TABLETS & SMALL DESKTOPS (<= 1200px) --- */
+@media (max-width: 1200px) {
+  :root {
+    --sidebar-left-width: 270px;
+    --sidebar-right-width: 290px;
+  }
+  .header-center {
+    margin: 0 16px;
+  }
+  .player-title-display {
+    max-width: 28%;
+    font-size: 1.1rem;
+  }
+}
+
+/* --- TABLET VERTICAL STACKING (<= 992px) --- */
+@media (max-width: 992px) {
+  body.app-body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100vh;
+    -webkit-overflow-scrolling: touch;
   }
 
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    width: 100%;
+  }
+
+  /* 1. Main video workspace sits at the top */
+  .main-content {
+    order: 1;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 10px 14px;
+    gap: 12px;
+  }
+
+  /* 2. Catalog section sits below player */
   .sidebar-left {
+    order: 2;
     width: 100% !important;
     max-width: 100% !important;
-    height: 350px;
+    min-width: 0 !important;
+    height: auto !important;
     border-right: none;
+    border-top: 1px solid var(--glass-border);
     border-bottom: 1px solid var(--glass-border);
   }
 
-  .resize-handle {
-    display: none;
+  .catalog-list {
+    max-height: 520px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    padding: 14px;
   }
 
-  .main-content {
-    height: auto;
-    overflow: visible;
+  /* 3. My Favorites / Episodes sits after catalog */
+  .sidebar-right {
+    order: 3;
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    border-left: none;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .playlist-container {
+    max-height: 480px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px;
+  }
+
+  /* Disable drag splitters on touch/stacked view */
+  .resize-handle,
+  .resize-handle-right {
+    display: none !important;
   }
 }
 
-@media (max-width: 600px) {
-  .app-header {
-    padding: 0 16px;
+/* --- MOBILE DEVICES & SMALL TABLETS (<= 768px) --- */
+@media (max-width: 768px) {
+  :root {
+    --header-height: 60px;
   }
 
-  .header-center {
-    display: none; /* Hide search bar on mobile, use hamburger or simple icons */
+  /* Header adjustments */
+  .app-header {
+    height: 60px;
+    padding: 0 12px;
+  }
+
+  .header-left {
+    gap: 10px;
+  }
+
+  .livestream-logo {
+    width: 120px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .header-right .nav-btn,
+  .header-right .admin-btn-link,
+  .header-right .signup-btn-link {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: 16px;
+  }
+
+  /* Touch visibility for card buttons: always visible without hover */
+  .add-to-fav,
+  .card-delete-btn {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Catalog cards layout on mobile */
+  .catalog-list {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .catalog-card {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  /* Custom Video Player touch optimization */
+  .video-container {
+    border-radius: 8px;
+  }
+
+  .video-container.portrait-mode {
+    max-height: 70vh;
+    max-width: calc(70vh * (9 / 16));
+    border-radius: 12px;
+  }
+
+  .quick-ratio-btn {
+    top: 10px;
+    right: 10px;
+    padding: 5px 9px;
+    font-size: 0.74rem;
+  }
+
+  .progress-bar-container {
+    padding: 8px 0;
+  }
+
+  #theater-btn {
+    display: none !important;
+  }
+
+  /* Reactions deck on mobile */
+  .reactions-section {
+    padding: 8px 12px;
+    border-radius: 8px;
+    gap: 8px;
+  }
+
+  .reactions-left {
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   .reactions-deck {
     width: 100%;
     overflow-x: auto;
-    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding: 2px 0 4px 0;
+  }
+
+  .reaction-btn {
+    padding: 4px 8px;
+    font-size: 0.74rem;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .details-toggle-btn {
+    padding: 5px 12px;
+    font-size: 0.76rem;
+  }
+
+  /* Details Drawer on mobile */
+  .details-section {
+    padding: 18px 14px;
+    max-height: 80vh;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+  }
+
+  .title-meta h1 {
+    font-size: 1.3rem;
+    line-height: 1.3;
+  }
+
+  .meta-badges {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+  }
+
+  .details-studio-info {
+    font-size: 0.75rem;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 10px;
+  }
+
+  /* Prevent automatic iOS zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Admin & Upload container mobile layout */
+  body.admin-page .admin-container {
+    padding: 24px 16px !important;
+    margin: 16px auto !important;
+    width: 95% !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .form-group.full-width {
+    grid-column: span 1 !important;
+  }
+}
+
+/* --- SMARTPHONES & COMPACT MOBILE (<= 600px) --- */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .livestream-logo {
+    width: 110px;
+  }
+
+  /* Responsive Search bar in Mobile Header */
+  .header-center {
+    margin: 0 4px;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+
+  #search-input {
+    height: 36px;
+    padding: 0 28px 0 32px;
+    font-size: 0.8rem;
+  }
+
+  .search-icon {
+    left: 10px;
+    font-size: 0.82rem;
+  }
+
+  #search-clear-btn {
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.72rem;
+  }
+
+  #search-dropdown {
+    top: 42px;
+    max-height: 320px;
+    border-radius: 10px;
+  }
+
+  .search-result-item {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .search-result-poster {
+    width: 32px;
+    height: 44px;
+  }
+
+  .search-result-title {
+    font-size: 0.82rem;
+  }
+
+  .header-right {
+    gap: 5px;
+  }
+
+  .header-right .nav-btn,
+  .header-right .admin-btn-link,
+  .header-right .signup-btn-link {
+    padding: 5px 9px;
+    font-size: 0.76rem;
+  }
+
+  .user-profile .avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Player controls mobile tuning */
+  .player-title-display {
+    display: none !important;
+  }
+
+  .volume-slider {
+    display: none !important;
+  }
+
+  .controls-left,
+  .controls-right {
+    gap: 8px;
+  }
+
+  .player-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.95rem;
+  }
+
+  .time-display {
+    font-size: 0.7rem;
+  }
+
+  /* Reactions section on compact mobile */
+  .reactions-prompt {
+    display: none;
+  }
+
+  .reaction-label {
+    display: none;
+  }
+
+  .reaction-btn {
+    padding: 5px 9px;
+    border-radius: 16px;
+  }
+
+  .reaction-emoji {
+    font-size: 1rem;
+  }
+
+  /* Catalog card columns on small screens */
+  .catalog-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .card-poster-wrapper.poster-landscape {
+    aspect-ratio: 16 / 9;
+  }
+
+  .card-poster-wrapper.poster-portrait {
+    aspect-ratio: 2 / 3;
+    max-height: 200px;
+  }
+
+  /* Navigation Drawer width */
+  .nav-drawer {
+    width: 280px;
+    max-width: 85vw;
+  }
+
+  /* Modals sizing on mobile */
+  .signup-container,
+  .social-container {
+    width: 95%;
+    max-width: 96vw;
+    padding: 20px 14px;
+    border-radius: 12px;
+  }
+
+  .signup-logo {
+    font-size: 1.8rem;
+  }
+
+  .modal-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .modal-tile-info {
+    padding: 8px;
+  }
+
+  .modal-tile-title {
+    font-size: 0.8rem;
+  }
+}
+
+/* --- EXTRA COMPACT SMARTPHONES (<= 380px) --- */
+@media (max-width: 380px) {
+  .app-header {
+    padding: 0 6px;
+    gap: 4px;
+  }
+
+  .livestream-logo {
+    width: 95px;
+  }
+
+  .header-left {
+    gap: 6px;
+  }
+
+  .header-right .nav-btn,
+  .header-right .admin-btn-link,
+  .header-right .signup-btn-link {
+    padding: 4px 7px;
+    font-size: 0.72rem;
+  }
+
+  .reactions-prompt {
+    display: none;
+  }
+
+  .details-toggle-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .quick-ratio-btn {
+    top: 6px;
+    right: 6px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+  }
+
+  .fav-card {
+    padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .fav-poster {
+    width: 34px;
+    height: 48px;
+  }
+
+  .fav-title {
+    font-size: 0.78rem;
   }
 }
 

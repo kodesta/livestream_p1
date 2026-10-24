@@ -118,6 +118,7 @@ if (!user) {
     formData.append('genres', document.getElementById('genres').value);
     formData.append('rating', document.getElementById('rating').value);
     formData.append('description', document.getElementById('description').value);
+    formData.append('isAi', document.getElementById('isAi').checked);
     if (activePosterSource === 'url') {
       formData.append('posterUrl', document.getElementById('posterUrl').value);
     } else {
@@ -158,6 +159,8 @@ if (!user) {
         const res = JSON.parse(xhr.responseText);
         showSuccess(`Successfully published "${res.item.title}"! Redirecting back to catalog...`);
         uploadForm.reset();
+        const aiCheckbox = document.getElementById('isAi');
+        if (aiCheckbox) aiCheckbox.checked = false;
         posterFileName.style.display = 'none';
         videoFileName.style.display = 'none';
 

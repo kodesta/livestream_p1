@@ -373,6 +373,7 @@ app.get('/api/movies', async (req, res) => {
         genres: (item.title_genres || []).map(tg => tg.genres.genre_name),
         poster: item.poster_url || '',
         videoUrl: item.video_url || null,
+        isAi: item.is_ai === true,
         reactions: counts,
         releaseDate: item.release_date
           ? item.release_date.toISOString().split('T')[0]
@@ -586,6 +587,8 @@ app.post('/api/movies', upload.fields([
       releaseDate
     } = req.body;
 
+    const isAi = req.body.isAi === 'true';
+
     if (!title || !type) {
       return res.status(400).json({ error: "Title and Type are required." });
     }
@@ -622,6 +625,7 @@ app.post('/api/movies', upload.fields([
         poster_url: poster || null,
         video_url: type === 'Movie' ? finalVideoUrl || null : null,  // ← ADD THIS
         release_date: releaseDate ? new Date(releaseDate) : new Date(),
+        is_ai: isAi
       }
     });
 
@@ -682,6 +686,7 @@ app.post('/api/movies', upload.fields([
       genres: genresArray,
       poster: poster || '',
       videoUrl: type === 'Movie' ? finalVideoUrl : null,
+      isAi: isAi,
       reactions: { love: 0, like: 0, funny: 0, wow: 0, sad: 0 },
       releaseDate: releaseDate || new Date().toISOString().split('T')[0]
     };

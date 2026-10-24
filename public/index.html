@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=9.0">
-  <link rel="stylesheet" href="new.css?v=9.0">
+  <link rel="stylesheet" href="style.css?v=11.0">
+  <link rel="stylesheet" href="new.css?v=11.0">
 </head>
 <body class="app-body">
 
@@ -92,6 +92,18 @@
           <a href="#" class="sub-menu-item" data-filter="tv-old">Previously Released</a>
         </div>
       </div>
+
+      <!-- Made with AI Menu Section -->
+      <div class="menu-section">
+        <button class="menu-section-header" id="ai-section-toggle">
+          <span><i class="fa-solid fa-wand-magic-sparkles"></i> Made with AI</span>
+          <i class="fa-solid fa-chevron-down fold-icon"></i>
+        </button>
+        <div class="menu-section-content" id="ai-section-content">
+          <a href="#" class="sub-menu-item" data-filter="ai">All AI-made titles</a>
+        </div>
+      </div>
+
       <!-- Genres Section -->
       <div class="menu-section">
         <button class="menu-section-header" id="genres-section-toggle">
@@ -273,6 +285,7 @@
               <span class="badge badge-rank" id="active-rank">#0 Globally</span>
               <span class="badge badge-duration" id="active-duration">120 min</span>
               <span class="badge badge-country" id="active-country">USA</span>
+              <span class="badge" id="active-ai-badge" style="display: none;">Made with AI</span>
             </div>
           </div>
           <div class="details-header-right">
@@ -535,7 +548,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=10.0"></script>
+  <script src="app.js?v=11.0"></script>
 
 </body>
 </html>
