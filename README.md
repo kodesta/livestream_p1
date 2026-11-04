@@ -1,1 +1,1 @@
-This is a movie streaming app, that allow users to upload their film, movies or tv shows.
+This is a movie streaming app, that allow users to upload their film, movies or tv shows. I used Google Antigravity for code generation. i used Lunacy and Stitch for pre UI sketch. I wrote basic database queries in postgres, which Antigravity was instructed by me to connect with postgres database. I made creative direction, changes, update by communicating with antigravity.
