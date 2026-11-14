@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "postinstall": "prisma generate",
     "test": "node --test tests/top_nav.test.js"
   },
   "dependencies": {
