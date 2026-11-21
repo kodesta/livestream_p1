@@ -1797,7 +1797,13 @@ const sidebarRight = document.getElementById('sidebar-right');
   function loadVideo(url, title){
     playerTitleDisplay.textContent = title || 'Video Stream';
     const youtubeplayer = document.getElementById('youtube-player');
-    const isYoutube = typeof url === 'string' && url.includes('youtube.com/embed');
+    function formatYouTubeUrl(u) {
+      if (!u || typeof u !== 'string') return u;
+      const match = u.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+      return (match && match[1]) ? `https://www.youtube.com/embed/${match[1]}` : u;
+    }
+    const formattedUrl = formatYouTubeUrl(url);
+    const isYoutube = typeof formattedUrl === 'string' && formattedUrl.includes('youtube.com/embed');
 
     if (isYoutube) {
       // trailer hand off
@@ -1805,16 +1811,16 @@ const sidebarRight = document.getElementById('sidebar-right');
       videoPlayer.style.display = 'none';
       playerControls.style.display = 'none';
       bigPlayBtn.style.display = 'none';
-      youtubeplayer.src = url + '?rel=0';
+      youtubeplayer.src = formattedUrl + (formattedUrl.includes('?') ? '&rel=0' : '?rel=0');
       youtubeplayer.style.display = 'block';
-    } else if (url) {
+    } else if (formattedUrl) {
       // normal mode
       youtubeplayer.src = '';
       youtubeplayer.style.display = 'none';
       videoPlayer.style.display = 'block';
       playerControls.style.display = 'flex';
       bigPlayBtn.style.display = 'flex';
-      videoPlayer.src = url;
+      videoPlayer.src = formattedUrl;
       videoPlayer.load();
     } else {
       // no video stream available

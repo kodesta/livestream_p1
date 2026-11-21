@@ -566,6 +566,15 @@ app.post('/api/movies/:id/react', async (req, res) => {
   res.json(db[itemIndex]);
 });
 
+function formatYouTubeUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+  if (match && match[1]) {
+    return `https://www.youtube.com/embed/${match[1]}`;
+  }
+  return url;
+}
+
 // Upload a new movie or TV show
 
 app.post('/api/movies', upload.fields([
@@ -600,7 +609,7 @@ app.post('/api/movies', upload.fields([
     }
 
     // Handle video
-    let finalVideoUrl = videoUrl || '';
+    let finalVideoUrl = formatYouTubeUrl(videoUrl || '');
     if (req.files?.videoFile?.[0]) {
       finalVideoUrl = '/uploads/' + req.files.videoFile[0].filename;
     }
@@ -734,7 +743,7 @@ app.post('/api/movies', upload.fields([
       poster = '/uploads/' + req.files.posterFile[0].filename;
     }
     // Handle video source (URL or file)
-    let finalVideoUrl = videoUrl || '';
+    let finalVideoUrl = formatYouTubeUrl(videoUrl || '');
     if (req.files && req.files.videoFile && req.files.videoFile[0]) {
       finalVideoUrl = '/uploads/' + req.files.videoFile[0].filename;
     }
